@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -10,378 +9,50 @@
     <title>Acompanhamento de Produção</title>
 
     <link rel="manifest" href="manifest.json?v=4.0.9" />
-    
     <meta name="theme-color" content="#0077cc">
-    
     <link rel="apple-touch-icon" href="icons/icon-180x180.png?v=2.0.2" />
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
-    <style>/* ================================================================ */
-/* =================== NOVO CSS - LAYOUT MODERNO ================== */
-/* ================================================================ */
-/* ================================================================ */
-/* =========== ESTILO PLANILHA PARA TABELAS ESPECÍFICAS =========== */
-/* ================================================================ */
+    <link rel="stylesheet" href="css/global.css">
 
-/* Remove o wrapper da tabela de operadores também, se houver */
-#operadores table {
-    margin-top: 1rem;
-}
+    <style>
+        /* Estilos específicos deste Dashboard que não estão no global */
+        .nav {
+            display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center;
+            margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);
+        }
+        .nav a {
+            background-color: var(--primary); color: white; text-decoration: none;
+            font-weight: 500; padding: 0.3rem 0.7rem; font-size: 0.85rem;
+            border-radius: 8px; transition: background-color 0.2s, transform 0.2s;
+            text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav a:hover { background-color: var(--primary-dark); transform: translateY(-2px); }
+        .nav a.active { background-color: var(--primary-dark); font-weight: 700; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(1px); }
+        .nav a[href="Massa.html"] { background-color: var(--success); }
+        .nav a[href="Massa.html"]:hover { background-color: #218838; }
 
-/* Aplica o estilo de borda e centralização apenas nas tabelas de histórico e operadores */
-#historico table th, #historico table td,
-#operadores table th, #operadores table td {
-    border: 1px solid var(--border-color); /* ADICIONA BORDAS EM TUDO */
-    text-align: center; /* Centraliza o texto */
-    white-space: normal; /* Permite que o texto quebre a linha novamente */
-    padding: 0.5rem; /* Um pouco menos de padding para ficar mais compacto */
-}
-
-/* Estiliza o cabeçalho para ter fundo azul e texto branco */
-#historico table th,
-#operadores table th {
-    background-color: var(--primary);
-    color: white;
-    font-weight: bold;
-}
-
-/* Adiciona o efeito de "zebra" (linhas alternadas) no corpo da tabela */
-#historico tbody tr:nth-child(2n),
-#operadores tbody tr:nth-child(2n) {
-    background-color: var(--bg-color);
-}
-
-/* Garante que o efeito hover continue funcionando, exceto na linha de detalhes */
-#historico tbody tr:not(.linha-detalhes):hover,
-#operadores tbody tr:hover {
-    background-color: hsl(var(--primary-hue), 80%, 90%);
-}
+        /* Gráficos */
+        .charts-container { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
+        @media (min-width: 900px) { .charts-container { grid-template-columns: 1fr 1fr; } }
         
-        /* --- NOVA REGRA PARA TABELA ROLÁVEL --- */
-.table-wrapper {
-    overflow-x: auto; /* Habilita a rolagem horizontal */
-    -webkit-overflow-scrolling: touch; /* Melhora a rolagem em iOS */
-}
-:root {
-    --primary-hue: 210; /* Tom de azul */
-    --primary: hsl(var(--primary-hue), 80%, 55%);
-    --primary-light: hsl(var(--primary-hue), 80%, 97%);
-    --primary-dark: hsl(var(--primary-hue), 80%, 45%);
-    --accent: #ff9900;
-    --danger: #dc3545;
-    --success: #28a745;
-    --text-dark: #2c3e50;
-    --text-light: #7f8c8d;
-    --bg-color: #f8f9fa;
-    --card-bg: #ffffff;
-    --border-color: #e0e6ef;
-    --shadow-color: rgba(149, 157, 165, 0.2);
-}
+        /* KPI Cards */
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 1.25rem; margin: 2rem 0; }
+        .kpi-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); transition: all 0.2s; }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px var(--shadow-color); }
+        .kpi-card h3 { font-size: 0.9rem; color: var(--text-light); margin: 0 0 0.5rem; font-weight: 500; }
+        .kpi-card p { font-size: 2.0rem; font-weight: 700; margin: 0; color: var(--primary); }
+        .kpi-card.percent p { color: var(--success); }
 
-* { box-sizing: border-box; }
-
-body {
-    font-family: 'Inter', sans-serif; /* <-- NOVA FONTE */
-    margin: 0;
-    background: var(--bg-color);
-    color: var(--text-dark);
-    line-height: 1.6;
-}
-
-header {
-    background: var(--primary);
-    color: white;
-    padding: 1rem 1.25rem;
-    text-align: center;
-    border-bottom: 4px solid var(--primary-dark);
-}
-
-h1, h2, h3 { margin: 0 0 1rem; }
-h1 { font-size: 1.75rem; }
-h2 { font-size: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
-h3 { font-size: 1.1rem; color: var(--text-light); }
-
-.container {
-    max-width: 1100px;
-    margin: 2rem auto;
-    padding: 2rem; /* Mais espaçamento */
-    background: var(--card-bg);
-    border-radius: 16px; /* Cantos mais arredondados */
-    box-shadow: 0 8px 24px var(--shadow-color); /* Sombra mais suave */
-}
-
-/* --- NAVEGAÇÃO EM BOTÕES --- */
-.nav {
-    display: flex;
-    flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas pequenas */
-    gap: 0.45rem;    /* Espaço entre os botões */
-    justify-content: center; /* Centraliza o conjunto de botões */
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color); /* Mantém a linha de separação */
-}
-
-.nav a {
-    /* Estilo base do botão */
-    background-color: var(--primary);
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.3rem 0.7rem; /* <-- VALORES MENORES AQUI */
-    font-size: 0.85rem;       /* <-- LINHA ADICIONADA PARA DIMINUIR O TEXTO */
-    border-radius: 8px;     /* Cantos arredondados */
-    border-bottom: none;    /* Remove a borda antiga */
-    transition: background-color 0.2s ease-in-out, transform 0.2s ease;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra suave */
-}
-
-.nav a:hover {
-    /* Efeito ao passar o mouse */
-    background-color: var(--primary-dark);
-    transform: translateY(-2px); /* Efeito de "levantar" o botão */
-}
-
-.nav a.active {
-    /* Estilo do botão ativo (página selecionada) */
-    background-color: var(--primary-dark);
-    font-weight: 700;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); /* Sombra interna para dar profundidade */
-    transform: translateY(1px);
-}
-
-/* Estilo específico para o botão "Fábrica de Massa" */
-.nav a[href="Massa.html"] {
-    background-color: var(--success); /* Cor verde para destacar */
-}
-.nav a[href="Massa.html"]:hover {
-     background-color: #218838; /* Verde mais escuro no hover */
-}
-
-/* --- FORMULÁRIOS MODERNOS --- */
-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-/* ================================================================ */
-/* ============= NOVO: AJUSTE PARA 2 COLUNAS EM LANÇAMENTO ========== */
-/* ================================================================ */
-
-  #formProducao {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    display: block;
-    color: var(--text-light);
-    text-transform: uppercase;
-}
-input[type="date"], input[type="text"], input[type="number"], select, textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1rem;
-    background-color: var(--bg-color);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-input[type="date"]:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    background-color: var(--card-bg);
-    box-shadow: 0 0 0 3px hsla(var(--primary-hue), 80%, 55%, 0.2);
-}
-textarea { min-height: 80px; resize: vertical; }
-
-/* --- BOTÕES MODERNOS --- */
-.full { grid-column: 1/-1; }
-button {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 0.9rem;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-button:hover {
-    filter: none;
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-}
-button:active { transform: translateY(0); }
-button.secondary { background: #e0e6ef; color: var(--text-dark); }
-button.secondary:hover { background: #cfd8e3; }
-button.edit-btn { background: var(--accent); margin-right: 5px; }
-button.delete-btn { background: var(--danger); }
-
-/* --- FILTROS E TABELAS MODERNAS --- */
-.filtros {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background-color: var(--primary-light);
-    border-radius: 12px;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1.5rem;
-}
-th, td {
-    padding: 0.8rem 0.5rem; /* Menos padding nos lados */
-    text-align: left;
-    font-size: 0.9rem;
-    border: none;
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap; /* Impede que o texto quebre em várias linhas */
-}
-th {
-    background: none;
-    color: var(--text-light);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    text-align: left;
-}
-tbody tr:hover { background-color: var(--primary-light); }
-
-/* --- KPI CARDS MODERNOS --- */
-.kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-    gap: 1.25rem;
-    margin: 2rem 0;
-}
-.kpi-card {
-    background: var(--card-bg);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s ease-in-out;
-}
-.kpi-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px var(--shadow-color);
-}
-.kpi-card h3 {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin: 0 0 0.5rem;
-    font-weight: 500;
-}
-.kpi-card p {
-    font-size: 2.0rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--primary);
-}
-.kpi-card.percent p { color: var(--success); }
-
-/* --- NOVO: Estilos para os Gráficos --- */
-.charts-container {
-    display: grid;
-    grid-template-columns: 1fr; /* Começa com uma coluna para telas pequenas */
-    gap: 2rem;
-    margin-top: 2rem;
-}
-
-@media (min-width: 900px) { /* Em telas maiores, usa duas colunas */
-    .charts-container {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-
-/* --- Outros estilos --- */
-.paginacao { display: flex; justify-content: center; align-items: center; margin-top: 1.5rem; gap: 1rem; }
-.linha-detalhes { 
-    display: none;
-    background-color: var(--primary-light); }
-.linha-detalhes td { padding: 1rem 1.5rem; }
-.expand-btn {
-    cursor: pointer; font-weight: bold; font-size: 1.1rem; width: 30px; height: 30px;
-    border-radius: 50%; background-color: #e0e6ef; border: none;
-}
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;
-}
-/* ================================================================ */
-/* ============== CSS DO POP-UP (MODAL) ATUALIZADO ================ */
-/* ================================================================ */
-.modal-content {
-    background: white;
-    padding: 1.5rem; /* Diminuído para economizar espaço */
-    border-radius: 16px;
-    width: 90%; 
-    max-width: 600px;
-    max-height: 85vh; /* Garante que a altura não passe de 85% da tela */
-    overflow-y: auto; /* Adiciona barra de rolagem se o conteúdo for maior */
-}
-
-/* Deixa os formulários dentro do pop-up mais compactos */
-.modal-content form {
-    gap: 0.8rem;
-}
-.modal-content form label {
-    margin-bottom: 0.2rem;
-}
-.modal-content form input,
-.modal-content form select,
-.modal-content form textarea {
-    padding: 0.7rem;
-    font-size: 0.95rem;
-}
-/* ================================================================ */
-
-        /* ================================================================ */
-/* ============== REDUÇÃO DE TAMANHO BOTÕES DE AÇÃO =============== */
-/* ================================================================ */
-
-/* Alvo: Botões de Editar e Excluir */
-.edit-btn, .delete-btn {
-    padding: 0.3rem 0.8rem; /* Padding vertical e horizontal reduzido */
-    font-size: 0.75rem;     /* Tamanho da fonte um pouco menor */
-}
-
-/* --- NOVO ESTILO PARA O BOTÃO EXPANDIR --- */
-.expand-btn {
-    background: transparent;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    display: flex; /* Essencial para alinhar o ícone SVG */
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto; /* Centraliza o botão na célula da tabela */
-    transition: transform 0.2s ease-in-out; /* Animação de rotação */
-}
-.expand-btn svg {
-    width: 9px; /* Tamanho do ícone */
-    height: 9px;
-    color: var(--text-light); /* Cor padrão do ícone */
-}
-.expand-btn:hover svg {
-    color: var(--primary); /* Cor do ícone ao passar o mouse */
-}
-.expand-btn.open {
-    transform: rotate(90deg); /* Gira o ícone 90 graus quando a classe 'open' é adicionada */
-}
+        /* Paginação */
+        .paginacao { display: flex; justify-content: center; align-items: center; margin-top: 1.5rem; gap: 1rem; }
+        
+        /* Detalhes da Tabela */
+        .linha-detalhes { display: none; background-color: var(--primary-light); }
+        .linha-detalhes td { padding: 1rem 1.5rem; }
     </style>
 </head>
 <body>
@@ -393,79 +64,36 @@ tbody tr:hover { background-color: var(--primary-light); }
             <a href="#" id="linkOper" onclick="mostrarPagina('operadores')">Operadores</a>
             <a href="#" id="linkHist" onclick="mostrarPagina('historico')">Histórico</a>
             <a href="#" id="linkDash" onclick="mostrarPagina('dashboard')">Dashboard</a>
-            <a href="Massa.html">Fábrica de Massa</a>        </div>
+            <a href="Massa.html">Fábrica de Massa</a>
+        </div>
 
         <section id="lancamento">
             <h2>Lançamento de Produção</h2>
             <form id="formProducao">
-                <div>
-                    <label>Data</label>
-                    <input type="date" id="data" required />
-                </div>
-                <div>
-                    <label>Setor</label>
+                <div><label>Data</label><input type="date" id="data" required /></div>
+                <div><label>Setor</label>
                     <select id="setor" required>
                         <option value="">Selecione</option>
-                        <option>Conformação</option>
-                        <option>Esmaltação</option>
-                        <option>Embalagem</option>
-                        <option>Forno Vidrado</option>
-                        <option>Forno chacote</option>
+                        <option>Conformação</option><option>Esmaltação</option><option>Embalagem</option>
+                        <option>Forno Vidrado</option><option>Forno chacote</option>
                     </select>
                 </div>
-                <div>
-                    <label>Turno</label>
+                <div><label>Turno</label>
                     <select id="turno" required>
                         <option value="">Selecione</option>
-                        <option>Comercial</option> 
-                        <option>Turno 1 (6x2)</option>
-                        <option>Turno 2 (6x2)</option>
-                        <option>Turno 3 (6x2)</option>
-                        <option>Turno 4 (6x2)</option>
-                        <option>Turno 1 (5x2)</option>
+                        <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
+                        <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
                         <option>Turno 2 (5x2)</option>
                     </select>
                 </div>
-                <div>
-                    <label>Operador</label>
-                    <select id="operadorSelect" required>
-                        <option value="">Selecione o setor</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Máquina</label>
-                    <select id="maquinaSelect" required>
-                        <option value="">Selecione o setor primeiro</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Massa</label>
-                    <select id="massa" required>
-                        <option value="">Selecione</option>
-                        <option>Stone</option>
-                        <option>Faiança</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Referência/CPB</label>
-                    <input type="text" id="refCpb" />
-                </div>
-                <div>
-                    <label>Produção Prevista</label>
-                    <input type="number" id="prevista" min="0" required />
-                </div>
-                <div>
-                    <label>Produção Realizada</label>
-                    <input type="number" id="realizada" min="0" required />
-                </div>
-                <div>
-                    <label>Quebras</label>
-                    <input type="number" id="quebras" min="0" required />
-                </div>
-                <div class="full">
-                    <label>Observação</label>
-                    <textarea id="observacao"></textarea>
-                </div>
+                <div><label>Operador</label><select id="operadorSelect" required><option value="">Selecione o setor</option></select></div>
+                <div><label>Máquina</label><select id="maquinaSelect" required><option value="">Selecione o setor primeiro</option></select></div>
+                <div><label>Massa</label><select id="massa" required><option value="">Selecione</option><option>Stone</option><option>Faiança</option></select></div>
+                <div><label>Referência/CPB</label><input type="text" id="refCpb" /></div>
+                <div><label>Produção Prevista</label><input type="number" id="prevista" min="0" required /></div>
+                <div><label>Produção Realizada</label><input type="number" id="realizada" min="0" required /></div>
+                <div><label>Quebras</label><input type="number" id="quebras" min="0" required /></div>
+                <div class="full"><label>Observação</label><textarea id="observacao"></textarea></div>
                 <div class="full" style="text-align:right;">
                     <button type="button" class="secondary" onclick="limparFormulario()">Limpar</button>
                     <button type="submit">Lançar</button>
@@ -476,54 +104,28 @@ tbody tr:hover { background-color: var(--primary-light); }
         <section id="operadores" style="display:none;">
             <h2>Cadastro de Operadores</h2>
             <form id="formOperador">
-                <div>
-                    <label>Data do Cadastro</label>
-                    <input type="date" id="dataCadastroOp" required />
-                </div>
-                <div>
-                    <label>Nome do Operador</label>
-                    <input type="text" id="nomeOperador" required placeholder="Nome completo" />
-                </div>
-                <div>
-                    <label>Setor</label>
+                <div><label>Data do Cadastro</label><input type="date" id="dataCadastroOp" required /></div>
+                <div><label>Nome do Operador</label><input type="text" id="nomeOperador" required placeholder="Nome completo" /></div>
+                <div><label>Setor</label>
                     <select id="setorOperador" required>
                         <option value="">Selecione</option>
-                        <option>Conformação</option>
-                        <option>Esmaltação</option>
-                        <option>Embalagem</option>
-                        <option>Forno Vidrado</option>
-                        <option>Forno chacote</option>
+                        <option>Conformação</option><option>Esmaltação</option><option>Embalagem</option>
+                        <option>Forno Vidrado</option><option>Forno chacote</option>
                     </select>
                 </div>
-                <div>
-                    <label>Turno</label>
+                <div><label>Turno</label>
                     <select id="turnoOperador" required>
                         <option value="">Selecione</option>
-                        <option>Comercial</option> 
-                        <option>Turno 1 (6x2)</option>
-                        <option>Turno 2 (6x2)</option>
-                        <option>Turno 3 (6x2)</option>
-                        <option>Turno 4 (6x2)</option>
-                        <option>Turno 1 (5x2)</option>
+                        <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
+                        <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
                         <option>Turno 2 (5x2)</option>
                     </select>
                 </div>
-                <div class="full" style="text-align:right;">
-                   <button type="submit">Cadastrar Operador</button>
-                </div>
+                <div class="full" style="text-align:right;"><button type="submit">Cadastrar Operador</button></div>
             </form>
-            
             <h2 style="margin-top: 20px;">Operadores Cadastrados</h2>
              <table id="tabelaOperadores">
-                <thead>
-                    <tr>
-                        <th>Data Cadastro</th>
-                        <th>Nome</th>
-                        <th>Setor</th>
-                        <th>Turno</th>
-                        <th>Ação</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Data Cadastro</th><th>Nome</th><th>Setor</th><th>Turno</th><th>Ação</th></tr></thead>
                 <tbody></tbody>
             </table>
         </section>
@@ -535,20 +137,13 @@ tbody tr:hover { background-color: var(--primary-light); }
                 <input type="date" id="filtroDataFim" placeholder="Data Fim" />
                 <select id="filtroSetor">
                     <option value="">Todos os Setores</option>
-                    <option>Conformação</option>
-                    <option>Esmaltação</option>
-                    <option>Embalagem</option>
-                    <option>Forno Vidrado</option>
-                    <option>Forno chacote</option>
+                    <option>Conformação</option><option>Esmaltação</option><option>Embalagem</option>
+                    <option>Forno Vidrado</option><option>Forno chacote</option>
                 </select>
                 <select id="filtroTurno">
                     <option value="">Todos os Turnos</option>
-                    <option>Comercial</option> 
-                    <option>Turno 1 (6x2)</option>
-                    <option>Turno 2 (6x2)</option>
-                    <option>Turno 3 (6x2)</option>
-                    <option>Turno 4 (6x2)</option>
-                    <option>Turno 1 (5x2)</option>
+                    <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
+                    <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
                     <option>Turno 2 (5x2)</option>
                 </select>
                 <input type="text" id="filtroMaquina" placeholder="Máquina..." list="listaMaquinasFiltro" />
@@ -559,19 +154,9 @@ tbody tr:hover { background-color: var(--primary-light); }
                 <button style="background:green;" onclick="exportarExcel()">Exportar Excel</button>
             </div>
             <table id="tabelaHistorico">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Data</th>
-                        <th>Setor</th>
-                        <th>Máquina</th>
-                        <th>% Efic.</th>
-                        <th>% Perda</th>
-                    </tr>
-                </thead>
+                <thead><tr><th></th><th>Data</th><th>Setor</th><th>Máquina</th><th>% Efic.</th><th>% Perda</th></tr></thead>
                 <tbody></tbody>
             </table>
-
             <div class="paginacao">
                 <button id="btnAnterior" onclick="paginaAnterior()">Anterior</button>
                 <span id="infoPagina">Página 1</span>
@@ -586,20 +171,13 @@ tbody tr:hover { background-color: var(--primary-light); }
                 <input type="date" id="dashFiltroDataFim" placeholder="Data Fim" />
                 <select id="dashFiltroSetor">
                     <option value="">Todos os Setores</option>
-                    <option>Conformação</option>
-                    <option>Esmaltação</option>
-                    <option>Embalagem</option>
-                    <option>Forno Vidrado</option>
-                    <option>Forno chacote</option>
+                    <option>Conformação</option><option>Esmaltação</option><option>Embalagem</option>
+                    <option>Forno Vidrado</option><option>Forno chacote</option>
                 </select>
                 <select id="dashFiltroTurno">
                     <option value="">Todos os Turnos</option>
-                    <option>Comercial</option> 
-                    <option>Turno 1 (6x2)</option>
-                    <option>Turno 2 (6x2)</option>
-                    <option>Turno 3 (6x2)</option>
-                    <option>Turno 4 (6x2)</option>
-                    <option>Turno 1 (5x2)</option>
+                    <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
+                    <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
                     <option>Turno 2 (5x2)</option>
                 </select>
                 <input type="text" id="dashFiltroMaquina" placeholder="Máquina..." list="listaMaquinasDash" />
@@ -616,16 +194,9 @@ tbody tr:hover { background-color: var(--primary-light); }
                 <div class="kpi-card percent"><h3>% Realizado/Previsto</h3><p id="kpiPercRealPrev">N/A</p></div>
                 <div class="kpi-card percent"><h3>% Quebras/Total</h3><p id="kpiPercQuebraTotal">N/A</p></div>
             </div>
-
             <div class="charts-container">
-                <div>
-                    <h3 style="text-align:center;">Produção por Turno no Período (%)</h3>
-                    <canvas id="pieChartTurno"></canvas>
-                </div>
-                <div>
-                    <h3 style="text-align:center;">Produção Acumulada (12 Meses)</h3>
-                    <canvas id="barChartMensal"></canvas>
-                </div>
+                <div><h3 style="text-align:center;">Produção por Turno (%)</h3><canvas id="pieChartTurno"></canvas></div>
+                <div><h3 style="text-align:center;">Produção Acumulada (12 Meses)</h3><canvas id="barChartMensal"></canvas></div>
             </div>
         </section>
     </div>
@@ -635,17 +206,17 @@ tbody tr:hover { background-color: var(--primary-light); }
             <h2>Editar Lançamento</h2>
             <form id="formEdicaoProducao">
                 <input type="hidden" id="editDocId">
-                <div> <label>Data</label> <input type="date" id="editData" required /> </div>
-                <div> <label>Setor</label> <select id="editSetor" required> <option>Conformação</option> <option>Esmaltação</option> <option>Embalagem</option> <option>Forno Vidrado</option> <option>Forno chacote</option> </select> </div>
-                <div> <label>Turno</label> <select id="editTurno" required> <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> </select> </div>
-                <div> <label>Operador</label> <input type="text" id="editOperador" required /> </div>
-                <div> <label>Máquina</label> <input type="text" id="editMaquina" required /> </div>
-                <div> <label>Massa</label> <select id="editMassa" required> <option>Stone</option> <option>Faiança</option> </select> </div>
-                <div> <label>Referência/CPB</label> <input type="text" id="editRefCpb" /> </div>
-                <div> <label>Prod. Prevista</label> <input type="number" id="editPrevista" required /> </div>
-                <div> <label>Prod. Realizada</label> <input type="number" id="editRealizada" required /> </div>
-                <div> <label>Quebras</label> <input type="number" id="editQuebras" required /> </div>
-                <div class="full"> <label>Observação</label> <textarea id="editObservacao"></textarea> </div>
+                <div><label>Data</label><input type="date" id="editData" required /></div>
+                <div><label>Setor</label><select id="editSetor" required><option>Conformação</option><option>Esmaltação</option><option>Embalagem</option><option>Forno Vidrado</option><option>Forno chacote</option></select></div>
+                <div><label>Turno</label><select id="editTurno" required><option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option><option>Turno 2 (5x2)</option></select></div>
+                <div><label>Operador</label><input type="text" id="editOperador" required /></div>
+                <div><label>Máquina</label><input type="text" id="editMaquina" required /></div>
+                <div><label>Massa</label><select id="editMassa" required><option>Stone</option><option>Faiança</option></select></div>
+                <div><label>Referência/CPB</label><input type="text" id="editRefCpb" /></div>
+                <div><label>Prod. Prevista</label><input type="number" id="editPrevista" required /></div>
+                <div><label>Prod. Realizada</label><input type="number" id="editRealizada" required /></div>
+                <div><label>Quebras</label><input type="number" id="editQuebras" required /></div>
+                <div class="full"><label>Observação</label><textarea id="editObservacao"></textarea></div>
                 <div class="full" style="text-align: right; margin-top: 10px;">
                     <button type="button" class="secondary" onclick="fecharModal('modalEdicaoProducao')">Cancelar</button>
                     <button type="submit">Salvar Alterações</button>
@@ -661,8 +232,8 @@ tbody tr:hover { background-color: var(--primary-light); }
                 <input type="hidden" id="editOpDocId">
                 <div><label>Data Cadastro</label><input type="date" id="editOpData" required></div>
                 <div><label>Nome</label><input type="text" id="editOpNome" required></div>
-                <div><label>Setor</label><select id="editOpSetor" required> <option>Conformação</option> <option>Esmaltação</option> <option>Embalagem</option> <option>Forno Vidrado</option> <option>Forno chacote</option> </select></div>
-                <div><label>Turno</label><select id="editOpTurno" required> <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> </select></div>
+                <div><label>Setor</label><select id="editOpSetor" required><option>Conformação</option><option>Esmaltação</option><option>Embalagem</option><option>Forno Vidrado</option><option>Forno chacote</option></select></div>
+                <div><label>Turno</label><select id="editOpTurno" required><option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option><option>Turno 2 (5x2)</option></select></div>
                 <div class="full" style="text-align: right; margin-top: 10px;">
                     <button type="button" class="secondary" onclick="fecharModal('modalEdicaoOperador')">Cancelar</button>
                     <button type="submit">Salvar Alterações</button>
@@ -671,941 +242,15 @@ tbody tr:hover { background-color: var(--primary-light); }
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { 
-            getFirestore, collection, addDoc, getDocs, 
-            query, where, orderBy, deleteDoc, doc, limit, startAfter,
-            getDoc, updateDoc // FUNÇÕES ADICIONADAS
-        } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    <script type="module" src="js/index.js"></script>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
-            authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
-            projectId: "acompanhamento-de-produc-b68b0",
-            storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
-            messagingSenderId: "891709449679",
-            appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        window.db = db;
-        window.producoesCol = collection(db, "producoes"); 
-        window.operadoresCol = collection(db, "operadores");
-        window.addDoc = addDoc;        
-        window.getDocs = getDocs;        
-        window.query = query;         
-        window.where = where;         
-        window.orderBy = orderBy;      
-        window.deleteDoc = deleteDoc; 
-        window.doc = doc;
-        window.limit = limit;
-        window.startAfter = startAfter;
-        // FUNÇÕES ADICIONADAS
-        window.getDoc = getDoc;
-        window.updateDoc = updateDoc;
-        
-        console.log("Firebase e Firestore inicializados!");
-    </script>
-
-<script>
-// Variáveis globais
-let db, producoesCol, operadoresCol;
-const ITENS_POR_PAGINA = 30;
-let ultimoDocumentoVisivel = null;
-let primeiroDocumentoStack = [null];
-let paginaAtual = 1;
-let filtroAtual = null;
-let pieChart = null; 
-let barChart = null; 
-
-// ======================= FUNÇÃO CORRIGIDA =======================
-/**
- * Retorna a data local atual no formato AAAA-MM-DD, evitando problemas de fuso horário.
- * @returns {string} A data formatada.
- */
-function obterDataLocalFormatada(d = new Date()) { // MODIFICADO: Aceita uma data como argumento
-    const data = new Date(d); // Garante que estamos trabalhando com uma cópia
-    data.setMinutes(data.getMinutes() - data.getTimezoneOffset()); // Ajusta para o fuso local
-    return data.toISOString().split('T')[0];
-}
-// ================================================================
-
-document.addEventListener("DOMContentLoaded", ()=>{
-    db = window.db; 
-    producoesCol = window.producoesCol; 
-    operadoresCol = window.operadoresCol;
-    
-    const today = obterDataLocalFormatada();
-
-    document.getElementById("data").value = today;
-    document.getElementById("dataCadastroOp").value = today;
-    document.getElementById("filtroDataInicio").value = today;
-    document.getElementById("filtroDataFim").value = today;
-    document.getElementById("dashFiltroDataInicio").value = today;
-    document.getElementById("dashFiltroDataFim").value = today;
-
-    document.getElementById("setor").addEventListener("change", carregarOperadores);
-    document.getElementById("formOperador").addEventListener("submit", cadastrarOperador);
-
-    document.getElementById('filtroSetor').addEventListener('change', () => {
-        atualizarDatalistMaquina('filtroSetor', 'listaMaquinasFiltro');
-    });
-    document.getElementById('dashFiltroSetor').addEventListener('change', () => {
-        atualizarDatalistMaquina('dashFiltroSetor', 'listaMaquinasDash');
-    });
-
-    document.getElementById('formEdicaoProducao').addEventListener('submit', salvarEdicaoProducao);
-    document.getElementById('formEdicaoOperador').addEventListener('submit', salvarEdicaoOperador);
-
-    Chart.register(ChartDataLabels);
-});
-
-const maquinasPorSetor = {
-    "Conformação":["Secador 2","Secador 3","Secador 4","Secador 10","Máquina de Xícara 1","Máquina de Xícara 2","Máquina de Prato","Prensa"],
-    "Esmaltação":["Disco 1","Disco 2","Disco 3","Disco 4","Robô 1","Robô 2","Spray","Imersão"],
-    "Embalagem":["Linha 1","Linha 2","Linha 3","Linha 4","Linha 5"],
-    "Forno Vidrado":["Forno 1","Forno 2"],
-    "Forno chacote":["Forno 3"]
-};
-
-document.getElementById("setor").addEventListener("change", e=>{
-    const setor = e.target.value;
-    const maqSelect = document.getElementById("maquinaSelect");
-    maqSelect.innerHTML='<option value="">(Selecione ou Digite)</option>';
-    if(maquinasPorSetor[setor]){
-        maquinasPorSetor[setor].forEach(m=>{
-            const opt=document.createElement("option");
-            opt.textContent=m; opt.value=m;
-            maqSelect.appendChild(opt);
-        });
-    }
-});
-
-function atualizarDatalistMaquina(idSetor, idDatalist) {
-    const setor = document.getElementById(idSetor).value;
-    const datalist = document.getElementById(idDatalist);
-    datalist.innerHTML = ''; 
-
-    if (maquinasPorSetor[setor]) {
-        maquinasPorSetor[setor].forEach(m => {
-            const option = document.createElement('option');
-            option.value = m;
-            datalist.appendChild(option);
-        });
-    }
-}
-
-
-function mostrarPagina(pg){
-    document.querySelectorAll("section").forEach(s=>s.style.display="none");
-    document.getElementById(pg).style.display="block";
-    document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
-    
-    const linkId = `#link${pg.charAt(0).toUpperCase()}${pg.slice(1,4)}`;
-    document.querySelector(linkId).classList.add("active");
-    
-    if(pg==="historico") filtrarHistorico(); 
-    if(pg==="dashboard") atualizarDashboard();
-    if(pg==="operadores") atualizarTabelaOperadores();
-}
-
-function toggleDetalhes(index) {
-    const detalhesRow = document.getElementById(`detalhes-${index}`);
-    const btn = event.target.closest('.expand-btn'); 
-    
-    if (detalhesRow.style.display === "table-row") {
-        detalhesRow.style.display = "none";
-        btn.classList.remove('open');
-    } else {
-        detalhesRow.style.display = "table-row";
-        btn.classList.add('open');
-    }
-}
-
-
-function fecharModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-async function abrirModalEdicao(docId) {
-    try {
-        const docRef = window.doc(db, "producoes", docId);
-        const docSnap = await window.getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            document.getElementById('editDocId').value = docId;
-            document.getElementById('editData').value = data.data;
-            document.getElementById('editSetor').value = data.setor;
-            document.getElementById('editTurno').value = data.turno;
-            document.getElementById('editOperador').value = data.operador;
-            document.getElementById('editMaquina').value = data.maquina;
-            document.getElementById('editMassa').value = data.massa;
-            document.getElementById('editRefCpb').value = data.refCpb || '';
-            document.getElementById('editPrevista').value = data.prevista;
-            document.getElementById('editRealizada').value = data.realizada;
-            document.getElementById('editQuebras').value = data.quebras;
-            document.getElementById('editObservacao').value = data.observacao || '';
-            document.getElementById('modalEdicaoProducao').style.display = 'flex';
-        } else {
-            alert("Erro: Documento não encontrado.");
-        }
-    } catch (error) {
-        console.error("Erro ao abrir modal de edição:", error);
-        alert("Não foi possível carregar os dados para edição.");
-    }
-}
-
-async function salvarEdicaoProducao(e) {
-    e.preventDefault();
-    const docId = document.getElementById('editDocId').value;
-    const docRef = window.doc(db, "producoes", docId);
-    
-    const dadosAtualizados = {
-        data: document.getElementById('editData').value,
-        setor: document.getElementById('editSetor').value,
-        turno: document.getElementById('editTurno').value,
-        operador: document.getElementById('editOperador').value,
-        maquina: document.getElementById('editMaquina').value,
-        massa: document.getElementById('editMassa').value,
-        refCpb: document.getElementById('editRefCpb').value,
-        prevista: parseFloat(document.getElementById('editPrevista').value),
-        realizada: parseFloat(document.getElementById('editRealizada').value),
-        quebras: parseFloat(document.getElementById('editQuebras').value),
-        observacao: document.getElementById('editObservacao').value,
-    };
-
-    try {
-        await window.updateDoc(docRef, dadosAtualizados);
-        alert("Lançamento atualizado com sucesso!");
-        fecharModal('modalEdicaoProducao');
-        filtrarHistorico();
-    } catch (error) {
-        console.error("Erro ao salvar alterações:", error);
-        alert("Erro ao salvar. Verifique o console.");
-    }
-}
-
-async function abrirModalOperador(docId) {
-    try {
-        const docRef = window.doc(db, "operadores", docId);
-        const docSnap = await window.getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            document.getElementById('editOpDocId').value = docId;
-            document.getElementById('editOpData').value = data.dataCadastro;
-            document.getElementById('editOpNome').value = data.nome;
-            document.getElementById('editOpSetor').value = data.setor;
-            document.getElementById('editOpTurno').value = data.turno;
-            document.getElementById('modalEdicaoOperador').style.display = 'flex';
-        } else {
-            alert("Erro: Operador não encontrado.");
-        }
-    } catch (error) {
-        console.error("Erro ao abrir modal de operador:", error);
-        alert("Não foi possível carregar os dados para edição.");
-    }
-}
-
-async function salvarEdicaoOperador(e) {
-    e.preventDefault();
-    const docId = document.getElementById('editOpDocId').value;
-    const docRef = window.doc(db, "operadores", docId);
-
-    const dadosAtualizados = {
-        dataCadastro: document.getElementById('editOpData').value,
-        nome: document.getElementById('editOpNome').value,
-        setor: document.getElementById('editOpSetor').value,
-        turno: document.getElementById('editOpTurno').value,
-    };
-
-    try {
-        await window.updateDoc(docRef, dadosAtualizados);
-        alert("Operador atualizado com sucesso!");
-        fecharModal('modalEdicaoOperador');
-        atualizarTabelaOperadores();
-    } catch (error) {
-        console.error("Erro ao salvar alterações do operador:", error);
-        alert("Erro ao salvar. Verifique o console.");
-    }
-}
-
-
-async function cadastrarOperador(e) {
-    e.preventDefault();
-    const dataCadastro = document.getElementById("dataCadastroOp").value;
-    const nome = document.getElementById("nomeOperador").value.trim();
-    const setor = document.getElementById("setorOperador").value;
-    const turno = document.getElementById("turnoOperador").value;
-
-    if (!dataCadastro || !nome || !setor || !turno) {
-        alert("Por favor, preencha todos os campos.");
-        return;
-    }
-
-    const novoOperador = {
-        dataCadastro: dataCadastro,
-        nome: nome,
-        setor: setor,
-        turno: turno
-    };
-
-    try {
-        await window.addDoc(operadoresCol, novoOperador);
-        alert(`Operador "${nome}" cadastrado com sucesso! ✅`);
-        document.getElementById("formOperador").reset();
-        document.getElementById("dataCadastroOp").value = obterDataLocalFormatada();
-        atualizarTabelaOperadores();
-    } catch (error) {
-        console.error("Erro ao cadastrar operador: ", error);
-        alert("Erro ao cadastrar. Verifique o console. ❌");
-    }
-}
-
-
-async function atualizarTabelaOperadores() {
-    const tbody = document.querySelector("#tabelaOperadores tbody");
-    tbody.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
-
-    if (!operadoresCol) return;
-
-    try {
-        const q = window.query(operadoresCol, window.orderBy("nome"));
-        const snapshot = await window.getDocs(q);
-        
-        tbody.innerHTML = "";
-        if (snapshot.empty) {
-            tbody.innerHTML = "<tr><td colspan='5'>Nenhum operador cadastrado.</td></tr>";
-            return;
-        }
-
-        snapshot.forEach(doc => {
-            const op = doc.data();
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${op.dataCadastro}</td>
-                <td>${op.nome}</td>
-                <td>${op.setor}</td>
-                <td>${op.turno}</td>
-                <td>
-                    <button class="edit-btn" onclick="abrirModalOperador('${doc.id}')">Editar</button>
-                    <button class="delete-btn" onclick="deletarOperador('${doc.id}')">Deletar</button>
-                </td>`;
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error("Erro ao buscar operadores:", error);
-        tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar dados.</td></tr>";
-    }
-}
-
-async function deletarOperador(docId) {
-    const senhaCorreta = "pb2025";
-    const senhaDigitada = prompt("Para confirmar a exclusão, digite a senha:");
-
-    if (senhaDigitada === null) return; 
-
-    if (senhaDigitada === senhaCorreta) {
-        if (confirm("Tem certeza que deseja deletar este operador?")) {
-            try {
-                await window.deleteDoc(window.doc(db, "operadores", docId));
-                alert("Operador deletado com sucesso!");
-                atualizarTabelaOperadores();
-            } catch (error) {
-                console.error("Erro ao deletar operador:", error);
-                alert("Erro ao deletar. Verifique o console.");
-            }
-        }
-    } else {
-        alert("Senha incorreta. A exclusão foi cancelada.");
-    }
-}
-
-async function carregarOperadores() {
-    const setor = document.getElementById("setor").value;
-    const opSelect = document.getElementById("operadorSelect");
-
-    opSelect.innerHTML = '<option value="">Carregando...</option>';
-    opSelect.disabled = true;
-
-    if (!setor) {
-        opSelect.innerHTML = '<option value="">Selecione o setor</option>';
-        opSelect.disabled = false;
-        return;
-    }
-
-    try {
-        const q = window.query(operadoresCol, 
-            window.where("setor", "==", setor),
-            window.orderBy("nome")
-        );
-        const snapshot = await window.getDocs(q);
-        
-        opSelect.innerHTML = '';
-        if (snapshot.empty) {
-            opSelect.innerHTML = '<option value="">Nenhum operador neste setor</option>';
-        } else {
-            opSelect.innerHTML = '<option value="">Selecione um operador</option>';
-            snapshot.forEach(doc => {
-                const nome = doc.data().nome;
-                opSelect.add(new Option(nome, nome));
-            });
-        }
-    } catch(error) {
-        console.error("Erro ao carregar operadores:", error);
-        opSelect.innerHTML = '<option value="">Erro ao carregar</option>';
-    } finally {
-        opSelect.disabled = false;
-    }
-}
-
-
-document.getElementById("formProducao").addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    if (!producoesCol || !window.addDoc) return;
-    const data = {
-        data:document.getElementById("data").value,
-        setor:document.getElementById("setor").value,
-        turno:document.getElementById("turno").value,
-        operador:document.getElementById("operadorSelect").value,
-        maquina:document.getElementById("maquinaSelect").value, 
-        massa:document.getElementById("massa").value,
-        refCpb:document.getElementById("refCpb").value,
-        prevista:parseFloat(document.getElementById("prevista").value),
-        realizada:parseFloat(document.getElementById("realizada").value),
-        quebras:parseFloat(document.getElementById("quebras").value),
-        observacao:document.getElementById("observacao").value,
-        timestamp: new Date().toISOString()
-    };
-    try {
-        await window.addDoc(producoesCol, data);
-        alert("Lançamento salvo com sucesso no Firebase! ✅");
-        limparFormulario();
-    } catch (error) {
-        console.error("Erro ao adicionar documento: ", error);
-        alert("Erro ao salvar o lançamento. Verifique o console. ❌"); 
-    }
-});
-
-function limparFormulario(){
-    document.getElementById("formProducao").reset();
-    document.getElementById("operadorSelect").innerHTML = '<option value="">Selecione o setor</option>';
-}
-
-function deletarRegistro(docId) {
-    const senhaCorreta = "pb2025";
-    const senhaDigitada = prompt("Para confirmar a exclusão, digite a senha:");
-
-    if (senhaDigitada === null) return;
-
-    if (senhaDigitada === senhaCorreta) {
-        if (confirm("Tem certeza que deseja deletar este registro de produção?")) {
-            try {
-                window.deleteDoc(window.doc(db, "producoes", docId))
-                    .then(() => {
-                        alert("Registro deletado com sucesso!");
-                        filtrarHistorico(); 
-                    });
-            } catch (error) {
-                console.error("Erro de execução na deleção: ", error);
-                alert("Erro ao deletar o registro. Verifique o console.");
-            }
-        }
-    } else {
-        alert("Senha incorreta. A exclusão foi cancelada.");
-    }
-}
-
-async function atualizarTabela(filtro, direcao = null) {
-    const tbody = document.querySelector("#tabelaHistorico tbody");
-    tbody.innerHTML = `<tr><td colspan="6">Carregando dados...</td></tr>`;
-
-    if (!producoesCol) {
-        tbody.innerHTML = `<tr><td colspan="6">Erro: O Firebase não está conectado.</td></tr>`;
-        return;
-    }
-
-    let queryConstraints = [];
-    if (filtro && filtro.dataInicio) queryConstraints.push(window.where("data", ">=", filtro.dataInicio));
-    if (filtro && filtro.dataFim) queryConstraints.push(window.where("data", "<=", filtro.dataFim));
-
-    const baseOrdering = [window.orderBy("data", "desc"), window.orderBy("timestamp", "desc")];
-    queryConstraints.push(...baseOrdering);
-    
-    if (direcao === 'proxima' && ultimoDocumentoVisivel) {
-        queryConstraints.push(window.startAfter(ultimoDocumentoVisivel));
-    } else if (direcao === 'anterior') {
-        primeiroDocumentoStack.pop();
-        const cursorAnterior = primeiroDocumentoStack[primeiroDocumentoStack.length - 1];
-        if(cursorAnterior){
-            queryConstraints.push(window.startAfter(cursorAnterior));
-        }
-    }
-    
-    queryConstraints.push(window.limit(ITENS_POR_PAGINA));
-    const q = window.query(producoesCol, ...queryConstraints);
-
-    try {
-        const querySnapshot = await window.getDocs(q);
-        const documentos = querySnapshot.docs;
-
-        let filtrados = documentos.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (filtro) {
-            filtrados = filtrados.filter(r =>
-                (!filtro.setor || r.setor === filtro.setor) &&
-                (!filtro.turno || r.turno === filtro.turno) &&
-                (!filtro.maquina || (r.maquina && r.maquina.toLowerCase().includes(filtro.maquina.toLowerCase()))) &&
-                (!filtro.refCpb || (r.refCpb && r.refCpb.toLowerCase().includes(filtro.refCpb.toLowerCase())))
-            );
-        }
-
-        tbody.innerHTML = "";
-        if (filtrados.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6">${paginaAtual > 1 ? 'Fim dos resultados.' : 'Nenhum registro encontrado.'}</td></tr>`;
-            document.getElementById('btnProxima').disabled = true;
-            return;
-        }
-
-        if(direcao === 'proxima'){
-            primeiroDocumentoStack.push(documentos[0]);
-        }
-        
-        ultimoDocumentoVisivel = documentos[documentos.length - 1];
-        
-        filtrados.forEach((r, index) => {
-            const prev = parseFloat(r.prevista) || 0;
-            const real = parseFloat(r.realizada) || 0;
-            const queb = parseFloat(r.quebras) || 0;
-            const percRealizadoPrevisto = prev > 0 ? ((real / prev) * 100).toFixed(2) + '%' : 'N/A';
-            const totalProd = real + queb;
-            const percQuebrasRealizado = totalProd > 0 ? ((queb / totalProd) * 100).toFixed(2) + '%' : 'N/A';
-            
-            const trPrincipal = document.createElement("tr");
-trPrincipal.innerHTML = `<td><button class="expand-btn" onclick="toggleDetalhes(${index})"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></button></td><td>${r.data}</td><td>${r.setor}</td><td>${r.maquina}</td><td>${percRealizadoPrevisto}</td><td>${percQuebrasRealizado}</td>`;            
-            const trDetalhes = document.createElement("tr");
-            trDetalhes.classList.add("linha-detalhes");
-            trDetalhes.id = `detalhes-${index}`;
-            trDetalhes.innerHTML = `<td colspan="6"><div class="detalhe-grid"><div><span>Operador:</span> ${r.operador}</div><div><span>Turno:</span> ${r.turno}</div><div><span>Massa:</span> ${r.massa}</div><div><span>Ref/CPB:</span> ${r.refCpb || 'N/A'}</div><div><span>Prevista:</span> ${prev}</div><div><span>Realizada:</span> ${real}</div><div><span>Quebras:</span> ${queb}</div><div><span>Observação:</span> ${r.observacao || 'Nenhuma'}</div><div><span>Ações:</span> <button class="edit-btn" onclick="abrirModalEdicao('${r.id}')">Editar</button> <button class="delete-btn" onclick="deletarRegistro('${r.id}')">Deletar</button></div></div></td>`;
-            
-            tbody.appendChild(trPrincipal);
-            tbody.appendChild(trDetalhes);
-        });
-
-        document.getElementById('infoPagina').textContent = `Página ${paginaAtual}`;
-        document.getElementById('btnAnterior').disabled = (paginaAtual === 1);
-        document.getElementById('btnProxima').disabled = (documentos.length < ITENS_POR_PAGINA);
-
-    } catch (error) {
-       console.error("Erro ao buscar documentos: ", error);
-       tbody.innerHTML=`<tr><td colspan='6'>Erro ao carregar dados. Verifique o console.</td></tr>`;
-    }
-}
-
-function proximaPagina() {
-    paginaAtual++;
-    atualizarTabela(filtroAtual, 'proxima');
-}
-
-function paginaAnterior() {
-    if (paginaAtual > 1) {
-        paginaAtual--;
-        atualizarTabela(filtroAtual, 'anterior');
-    }
-}
-
-function filtrarHistorico(){
-    filtroAtual = {
-        dataInicio:document.getElementById("filtroDataInicio").value,
-        dataFim:document.getElementById("filtroDataFim").value,
-        setor:document.getElementById("filtroSetor").value,
-        turno:document.getElementById("filtroTurno").value,
-        maquina:document.getElementById("filtroMaquina").value,
-        refCpb:document.getElementById("filtroRefCpb").value
-    };
-    paginaAtual = 1;
-    ultimoDocumentoVisivel = null;
-    primeiroDocumentoStack = [null];
-    atualizarTabela(filtroAtual);
-}
-
-function buscarTodos(){
-    document.getElementById("filtroDataInicio").value = "";
-    document.getElementById("filtroDataFim").value = "";
-    document.getElementById("filtroSetor").value = "";
-    document.getElementById("filtroTurno").value = "";
-    document.getElementById("filtroMaquina").value = "";
-    document.getElementById("filtroRefCpb").value = "";
-    
-    filtroAtual = null;
-    paginaAtual = 1;
-    ultimoDocumentoVisivel = null;
-    primeiroDocumentoStack = [null];
-    atualizarTabela(null);
-}
-
-async function exportarExcel() {
-    alert("Preparando dados para exportação. Isso pode levar um momento...");
-    const filtro = {
-        dataInicio: document.getElementById("filtroDataInicio").value,
-        dataFim: document.getElementById("filtroDataFim").value,
-        setor: document.getElementById("filtroSetor").value,
-        turno: document.getElementById("filtroTurno").value,
-        maquina: document.getElementById("filtroMaquina").value,
-        refCpb: document.getElementById("filtroRefCpb").value
-    };
-    const conditions = [];
-    if(filtro.dataInicio) conditions.push(window.where("data", ">=", filtro.dataInicio));
-    if(filtro.dataFim) conditions.push(window.where("data", "<=", filtro.dataFim));
-    const baseOrdering = [window.orderBy("data", "desc"), window.orderBy("timestamp", "desc")];
-    let q = window.query(producoesCol, ...conditions, ...baseOrdering);
-    try {
-        const querySnapshot = await window.getDocs(q);
-        const regs = [];
-        querySnapshot.forEach(doc => regs.push({ id: doc.id, ...doc.data() }));
-        let filtrados = regs.filter(r => 
-            (!filtro.setor || r.setor === filtro.setor) &&
-            (!filtro.turno || r.turno === filtro.turno) &&
-            (!filtro.maquina || (r.maquina && r.maquina.toLowerCase().includes(filtro.maquina.toLowerCase()))) &&
-            (!filtro.refCpb || (r.refCpb && r.refCpb.toLowerCase().includes(filtro.refCpb.toLowerCase())))
-        );
-        if (filtrados.length === 0) {
-            alert("Nenhum dado para exportar com os filtros atuais.");
-            return;
-        }
-const dataToExport = filtrados.map(r => {
-            const prev = parseFloat(r.prevista) || 0;
-            const real = parseFloat(r.realizada) || 0;
-            const queb = parseFloat(r.quebras) || 0;
-            const percRealizadoPrevisto = prev > 0 ? `${((real / prev) * 100).toFixed(2)}%` : 'N/A';
-            const totalProd = real + queb;
-            const percQuebrasRealizado = totalProd > 0 ? `${((totalProd > 0 ? (queb / totalProd) : 0) * 100).toFixed(2)}%` : 'N/A';
-            
-            // --- INÍCIO DA CORREÇÃO ---
-            let dataObj = null; // Começa como nulo por segurança
-
-            // 1. VERIFICA se r.data existe E se é uma string antes de tentar o .split()
-            if (r.data && typeof r.data === 'string') { 
-                const parts = r.data.split('-');
-                // 2. Garante que o split gerou 3 partes (Ano, Mês, Dia)
-                if (parts.length === 3) {
-                    dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                }
-            }
-            // --- FIM DA CORREÇÃO ---
-
-            return {
-                "Data": dataObj, // Passa o objeto Date (se existir) ou null (se não existir)
-                "Setor": r.setor,
-                "Turno": r.turno,
-                "Operador": r.operador,
-                "Máquina": r.maquina,
-                "Massa": r.massa,
-                "Ref/CPB": r.refCpb,
-                "Prevista": prev,
-                "Realizada": real,
-                "Quebras": queb,
-                "Obs": r.observacao,
-                "% Realizado/Previsto": percRealizadoPrevisto,
-                "% Quebras/Total": percQuebrasRealizado,
-            };
-        });
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Histórico");
-        XLSX.writeFile(wb, `Historico_Filtrado_${new Date().toISOString().split('T')[0]}.xlsx`);
-    } catch(error) {
-        console.error("Erro ao exportar para Excel:", error);
-        alert("Ocorreu um erro ao preparar os dados para exportação.");
-    }
-}
-
-// ================================================================
-// =================== LÓGICA DO DASHBOARD ATUALIZADA =================
-// ================================================================
-
-function filtrarDadosDashboardLocal(dados, filtro) {
-    return dados.filter(d => 
-        (!filtro.setor || d.setor === filtro.setor) &&
-        (!filtro.turno || d.turno === filtro.turno) &&
-        (!filtro.maquina || (d.maquina && d.maquina.toLowerCase().includes(filtro.maquina.toLowerCase()))) &&
-        (!filtro.refCpb || (d.refCpb && d.refCpb.toLowerCase().includes(filtro.refCpb.toLowerCase()))) &&
-        (!filtro.operador || (d.operador && d.operador.toLowerCase().includes(filtro.operador.toLowerCase())))
-    );
-}
-
-function calcularKPIsEstatistica(dados) {
-    let totalPrevisto = 0, totalRealizado = 0, totalQuebras = 0;
-    dados.forEach(d => {
-        totalPrevisto += parseFloat(d.prevista) || 0;
-        totalRealizado += parseFloat(d.realizada) || 0;
-        totalQuebras += parseFloat(d.quebras) || 0;
-    });
-    const totalProducao = totalRealizado + totalQuebras;
-    const percRealPrev = totalPrevisto > 0 ? `${((totalRealizado / totalPrevisto) * 100).toFixed(2)}%` : 'N/A';
-    const percQuebraTotal = totalProducao > 0 ? `${((totalQuebras / totalProducao) * 100).toFixed(2)}%` : 'N/A';
-    
-    document.getElementById('kpiPrevisto').textContent = totalPrevisto.toLocaleString();
-    document.getElementById('kpiRealizado').textContent = totalRealizado.toLocaleString();
-    document.getElementById('kpiQuebras').textContent = totalQuebras.toLocaleString();
-    document.getElementById('kpiPercRealPrev').textContent = percRealPrev;
-    document.getElementById('kpiPercQuebraTotal').textContent = percQuebraTotal;
-}
-
-function renderizarGraficoPizzaTurno(dados) {
-    if (pieChart) {
-        pieChart.destroy();
-    }
-
-    const totaisTurno = { '1': 0, '2': 0, '3': 0, '4': 0 };
-    
-    dados.forEach(d => {
-        const turnoStr = d.turno || "";
-        const realizada = parseFloat(d.realizada) || 0;
-        if (turnoStr.includes("Turno 1")) { totaisTurno['1'] += realizada; }
-        else if (turnoStr.includes("Turno 2")) { totaisTurno['2'] += realizada; }
-        else if (turnoStr.includes("Turno 3")) { totaisTurno['3'] += realizada; }
-        else if (turnoStr.includes("Turno 4")) { totaisTurno['4'] += realizada; }
-    });
-    
-    const totalProducaoTurnos = Object.values(totaisTurno).reduce((a, b) => a + b, 0);
-    const ctx = document.getElementById('pieChartTurno').getContext('2d');
-    
-    if (totalProducaoTurnos === 0) {
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      return;
-    }
-
-    pieChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Turno 1', 'Turno 2', 'Turno 3', 'Turno 4'],
-            datasets: [{
-                label: 'Produção Realizada',
-                data: [totaisTurno['1'], totaisTurno['2'], totaisTurno['3'], totaisTurno['4']],
-                backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384', '#4BC0C0'],
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { enabled: false },
-                datalabels: {
-                    formatter: (value, ctx) => {
-                        let sum = 0;
-                        let dataArr = ctx.chart.data.datasets[0].data;
-                        dataArr.map(data => { sum += data; });
-                        let percentage = (value*100 / sum).toFixed(2) + "%";
-                        return value > 0 ? percentage : '';
-                    },
-                    color: '#fff',
-                    font: { weight: 'bold', size: 14 }
-                }
-            }
-        }
-    });
-}
-
-function renderizarGraficoBarrasMensal(dados) {
-    if (barChart) {
-        barChart.destroy();
-    }
-
-    const totaisMensais = {};
-    const labelsMeses = [];
-    const hoje = new Date();
-
-    for (let i = 11; i >= 0; i--) {
-        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-        const mesAno = d.toLocaleString('pt-BR', { month: 'short', year: '2-digit' });
-        const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        labelsMeses.push({ label: mesAno, chave: chave });
-        totaisMensais[chave] = 0;
-    }
-    
-    dados.forEach(d => {
-        const [ano, mes] = d.data.split('-');
-        const chave = `${ano}-${mes}`;
-        if (totaisMensais.hasOwnProperty(chave)) {
-            totaisMensais[chave] += parseFloat(d.realizada) || 0;
-        }
-    });
-    
-    const dataValues = labelsMeses.map(item => totaisMensais[item.chave]);
-    const labelValues = labelsMeses.map(item => item.label);
-
-    const ctx = document.getElementById('barChartMensal').getContext('2d');
-    barChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labelValues,
-            datasets: [{
-                label: 'Produção Realizada',
-                data: dataValues,
-                backgroundColor: 'hsla(var(--primary-hue), 80%, 55%, 0.7)',
-                borderColor: 'hsl(var(--primary-hue), 80%, 55%)',
-                borderWidth: 1,
-                barPercentage: 0.7,
-                categoryPercentage: 0.8
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { 
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    color: '#444',
-                    font: { weight: 'bold' },
-                    formatter: (value) => value > 0 ? value.toLocaleString() : null
-                }
-            },
-            scales: { 
-                y: { 
-                    beginAtZero: true,
-                    ticks: {
-                       callback: function(value) {
-                           if (value >= 1000) {
-                               return value / 1000 + 'k';
-                           }
-                           return value;
-                       }
-                    } 
-                } 
-            }
-        }
-    });
-}
-
-async function atualizarDashboard(){
-    if (!producoesCol || !window.getDocs || !window.query) {
-        console.error("Firebase não conectado para o Dashboard."); return;
-    }
-    
-    const filtroGeral = {
-        dataInicio: document.getElementById("dashFiltroDataInicio").value,
-        dataFim: document.getElementById("dashFiltroDataFim").value,
-        setor: document.getElementById("dashFiltroSetor").value,
-        turno: document.getElementById("dashFiltroTurno").value,
-        maquina: document.getElementById("dashFiltroMaquina").value,
-        refCpb: document.getElementById("dashFiltroRefCpb").value.trim(),
-        operador: document.getElementById("dashFiltroOperador").value.trim().toLowerCase()
-    };
-    
-    try {
-        const conditionsPeriodo = [];
-        if(filtroGeral.dataInicio) conditionsPeriodo.push(window.where("data", ">=", filtroGeral.dataInicio));
-        if(filtroGeral.dataFim) conditionsPeriodo.push(window.where("data", "<=", filtroGeral.dataFim));
-        
-        const qPeriodo = window.query(producoesCol, ...conditionsPeriodo, window.orderBy("data", "desc"));
-        const snapshotPeriodo = await window.getDocs(qPeriodo);
-        
-        const dadosGeraisPeriodo = [];
-        snapshotPeriodo.forEach(doc => dadosGeraisPeriodo.push(doc.data()));
-        
-        const dadosFiltradosGeral = filtrarDadosDashboardLocal(dadosGeraisPeriodo, filtroGeral);
-        
-        calcularKPIsEstatistica(dadosFiltradosGeral);
-        renderizarGraficoPizzaTurno(dadosFiltradosGeral);
-
-    } catch (error) {
-        console.error("Erro ao carregar dados para KPIs e Gráfico de Pizza: ", error);
-    }
-    
-    try {
-        const hoje = new Date();
-        const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), hoje.getDate());
-        const dataInicio12M = obterDataLocalFormatada(dozeMesesAtras);
-
-        const conditions12M = [window.where("data", ">=", dataInicio12M)];
-        if (filtroGeral.setor) {
-            conditions12M.push(window.where("setor", "==", filtroGeral.setor));
-        }
-        
-        const q12M = window.query(producoesCol, ...conditions12M);
-        const snapshot12M = await window.getDocs(q12M);
-
-        const dados12Meses = [];
-        snapshot12M.forEach(doc => dados12Meses.push(doc.data()));
-        
-        const dadosFiltrados12M = filtrarDadosDashboardLocal(dados12Meses, filtroGeral);
-        renderizarGraficoBarrasMensal(dadosFiltrados12M);
-
-    } catch (error) {
-        console.error("Erro ao carregar dados para Gráfico de Barras: ", error);
-    }
-}
-
-
-window.deletarRegistro = deletarRegistro;
-window.deletarOperador = deletarOperador;
-window.filtrarHistorico = filtrarHistorico;
-window.buscarTodos = buscarTodos;
-window.exportarExcel = exportarExcel;
-window.atualizarDashboard = atualizarDashboard;
-window.limparFormulario = limparFormulario;
-window.mostrarPagina = mostrarPagina;
-window.toggleDetalhes = toggleDetalhes;
-window.proximaPagina = proximaPagina;
-window.paginaAnterior = paginaAnterior;
-window.abrirModalEdicao = abrirModalEdicao;
-window.abrirModalOperador = abrirModalOperador;
-window.fecharModal = fecharModal;
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js?v=2.0.2")
-    .then(() => console.log("Service Worker registrado com sucesso."))
-    .catch(err => console.log("Erro ao registrar o Service Worker:", err));
-}
-</script>
-<script>
-let deferredPrompt;
-const installBtn = document.createElement("button");
-installBtn.textContent = "📥 Instalar Aplicativo";
-installBtn.style.display = "none";
-installBtn.style.position = "fixed";
-installBtn.style.bottom = "20px";
-installBtn.style.right = "20px";
-installBtn.style.padding = "10px 16px";
-installBtn.style.background = "#0077cc";
-installBtn.style.color = "#fff";
-installBtn.style.border = "none";
-installBtn.style.borderRadius = "8px";
-installBtn.style.cursor = "pointer";
-document.body.appendChild(installBtn);
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.style.display = "block";
-
-  installBtn.addEventListener("click", () => {
-    installBtn.style.display = "none";
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choiceResult => {
-      if (choiceResult.outcome === "accepted") {
-        console.log("Usuário aceitou instalar o app");
-      } else {
-        console.log("Usuário recusou instalar o app");
-      }
-      deferredPrompt = null;
-    });
-  });
-});
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('Service Worker registrado com sucesso:', registration.scope);
-          }).catch(error => {
-            console.log('Falha ao registrar o Service Worker:', error);
-          });
+          navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado', reg.scope))
+          .catch(err => console.log('SW falhou', err));
         });
       }
     </script>
 </body>
-</html>exportarExcel
+</html>
