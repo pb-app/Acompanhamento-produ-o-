@@ -54,8 +54,10 @@ h2 { font-size: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--b
 /* --- FORMULÁRIOS --- */
 form {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    /* MUDANÇA AQUI: De 250px para 140px. 
+       Isso permite que 2 colunas caibam lado a lado em telas pequenas */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem; /* Reduzi um pouco o gap (espaço) para não ficar apertado */
 }
 
 label {
@@ -139,4 +141,15 @@ th { color: var(--text-light); font-weight: 700; text-transform: uppercase; font
 /* Espaçamento interno para ficar bonito quando abrir */
 .linha-detalhes td {
     padding: 1rem 1.5rem;
+}
+
+/* Ajustes específicos para Celulares */
+@media (max-width: 600px) {
+    form {
+        gap: 0.6rem; /* Menos espaço entre os campos */
+    }
+    input, select {
+        padding: 0.6rem; /* Inputs mais compactos */
+        font-size: 0.9rem; /* Letra um pouco menor */
+    }
 }
