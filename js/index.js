@@ -645,3 +645,26 @@ async function renderizarGraficoMensal(filtroAtualDash) {
 
     } catch (e) { console.error("Erro Gráfico Mensal:", e); }
 }
+
+// =========================================================
+// NOVA FUNÇÃO: CARREGAR MÁQUINAS NO FORMULÁRIO
+// =========================================================
+function carregarMaquinas() {
+    const setor = document.getElementById("setor").value;
+    const maqSelect = document.getElementById("maquinaSelect");
+    
+    // Limpa as opções atuais
+    maqSelect.innerHTML = '<option value="">Selecione...</option>';
+
+    if (setor && maquinasPorSetor[setor]) {
+        // Cria as opções baseado na lista do setor
+        maquinasPorSetor[setor].forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = m;
+            maqSelect.appendChild(opt);
+        });
+    } else {
+        maqSelect.innerHTML = '<option value="">Selecione o setor primeiro</option>';
+    }
+}
