@@ -1,4 +1,4 @@
-const CACHE_NAME = 'producao-app-v2';
+const CACHE_NAME = 'producao-app-v3';
 
 // Lista de arquivos para salvar no celular (Cache)
 // IMPORTANTE: Os nomes aqui devem ser IDÊNTICOS aos arquivos do GitHub
