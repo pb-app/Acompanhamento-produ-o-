@@ -339,14 +339,159 @@ window.exportarExcel = async function() {
     // Implemente aqui conforme a necessidade.
 }
 
+// =========================================================
+// ATUALIZAÇÃO: DASHBOARD MASSA (LÓGICA COMPLETA)
+// =========================================================
+
 async function atualizarDashboard() {
-    // ... (Lógica de atualização dos KPIs e Gráfico Pizza) ...
-    // Similar ao index.js mas com campos da Massa
+    const dataInicio = document.getElementById('dashFiltroDataInicio').value;
+    const dataFim = document.getElementById('dashFiltroDataFim').value;
+    const turno = document.getElementById('dashFiltroTurno').value;
+
+    if (!dataInicio || !dataFim) return;
+
+    // Coloca "..." enquanto carrega
+    ['kpiTotalMeta', 'kpiTotalRealizado', 'kpiEficiencia', 'kpiRetrabalho'].forEach(id => 
+        document.getElementById(id).textContent = '...'
+    );
+
+    try {
+        // 1. Busca dados no Firebase
+        let constraints = [where("data", ">=", dataInicio), where("data", "<=", dataFim)];
+        if (turno) constraints.push(where("turno", "==", turno));
+        
+        const q = query(massaCol, ...constraints);
+        const querySnapshot = await getDocs(q);
+        const dados = querySnapshot.docs.map(doc => doc.data());
+
+        // 2. Calcula KPIs
+        const totais = dados.reduce((acc, reg) => {
+            acc.meta += reg.metaKgFT || 0;
+            acc.realizado += reg.kgCalculado || 0; // Realizado FT (Filtro Prensa)
+            acc.retrabalho += reg.retrabalhoKg || 0;
+            return acc;
+        }, { meta: 0, realizado: 0, retrabalho: 0 });
+
+        const eficiencia = totais.meta > 0 ? (totais.realizado / totais.meta) * 100 : 0;
+
+        // 3. Atualiza na Tela (KPIs)
+        document.getElementById('kpiTotalMeta').textContent = totais.meta.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+        document.getElementById('kpiTotalRealizado').textContent = totais.realizado.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+        document.getElementById('kpiRetrabalho').textContent = totais.retrabalho.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+        
+        const elEficiencia = document.getElementById('kpiEficiencia');
+        elEficiencia.textContent = `${eficiencia.toFixed(2)}%`;
+        
+        // Cores da Eficiência
+        elEficiencia.className = 'value'; // reseta classes
+        if (eficiencia >= 98) elEficiencia.classList.add('good'); // Verde
+        else if (eficiencia >= 90) elEficiencia.classList.add('efficiency-ok'); // Laranja (definir css se quiser)
+        else elEficiencia.classList.add('bad'); // Vermelho
+
+        // 4. Gera Gráfico de Pizza (Produção por Turno)
+        gerarGraficoPizzaTurnos(dados);
+
+    } catch (error) {
+        console.error("Erro Dashboard Massa:", error);
+    }
+}
+
+function gerarGraficoPizzaTurnos(dados) {
+    const producaoPorTurno = dados.reduce((acc, reg) => {
+        if (!acc[reg.turno]) acc[reg.turno] = 0;
+        acc[reg.turno] += reg.kgPalete || 0; // Gráfico usa o KG Palete (Real)
+        return acc;
+    }, {});
+
+    if (pieChartTurnosInstance) pieChartTurnosInstance.destroy();
+    
+    const ctx = document.getElementById('pieChartTurnos').getContext('2d');
+    pieChartTurnosInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(producaoPorTurno),
+            datasets: [{
+                data: Object.values(producaoPorTurno),
+                backgroundColor: ['#0077cc', '#28a745', '#ff9900', '#dc3545', '#6c757d', '#17a2b8'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' },
+                datalabels: {
+                    color: '#fff',
+                    formatter: (value, ctx) => {
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        return sum === 0 ? '0%' : (value * 100 / sum).toFixed(1) + '%';
+                    }
+                }
+            }
+        }
+    });
 }
 
 async function gerarGraficoProducaoMensal() {
-    // ... (Lógica do Gráfico de Barras) ...
-}
+    const turnoFiltro = document.getElementById('filtroTurnoGraficoMes').value;
+    
+    // Data de 1 ano atrás
+    const hoje = new Date();
+    const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), 1);
+    const dataInicioStr = dozeMesesAtras.toISOString().split('T')[0];
 
-// Para manter o código limpo, omiti a repetição exata da lógica dos gráficos,
-// pois ela é muito similar à do index.js. Se precisar dela completa, me avise!
+    try {
+        let constraints = [where("data", ">=", dataInicioStr)];
+        if (turnoFiltro) constraints.push(where("turno", "==", turnoFiltro));
+
+        const q = query(massaCol, ...constraints);
+        const querySnapshot = await getDocs(q);
+        const dados = querySnapshot.docs.map(doc => doc.data());
+
+        const producaoPorMes = {};
+        // Cria chaves para os últimos 12 meses
+        for(let i=11; i>=0; i--) {
+            const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            // Formato Chave: YYYY-MM
+            const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            // Formato Label: MM/YY
+            const label = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear().toString().substr(2)}`;
+            producaoPorMes[chave] = { label: label, valor: 0 };
+        }
+
+        dados.forEach(reg => {
+            const mesAno = reg.data.substring(0, 7); // Pega YYYY-MM
+            if (producaoPorMes[mesAno]) {
+                producaoPorMes[mesAno].valor += reg.kgPalete || 0;
+            }
+        });
+
+        const labels = Object.values(producaoPorMes).map(item => item.label);
+        const data = Object.values(producaoPorMes).map(item => item.valor);
+
+        if (barChartMensalInstance) barChartMensalInstance.destroy();
+        
+        const ctx = document.getElementById('barChartMensal').getContext('2d');
+        barChartMensalInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Produção Total (kg)',
+                    data: data,
+                    backgroundColor: '#0077cc',
+                    borderRadius: 4
+                }]
+            },
+            options: { 
+                scales: { y: { beginAtZero: true } },
+                plugins: {
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#444',
+                        formatter: (val) => val > 0 ? (val/1000).toFixed(0) + 'k' : ''
+                    },
+                    legend: { display: false }
+                }
+            }
+        });
+    } catch (error) { console.error("Erro Gráfico Mensal:", error); }
+}
