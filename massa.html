@@ -1,397 +1,30 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Lançamento - Fábrica de Massa</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
-    <style>
-/* ================================================================ */
-/* =========== LAYOUT MODERNO PARA A FÁBRICA DE MASSA =========== */
-/* ================================================================ */
-
-        /* ================================================================ */
-/* =========== ESTILO PLANILHA PARA TABELAS DA PÁGINA =========== */
-/* ================================================================ */
-
-/* Remove a borda inferior do estilo moderno para estas tabelas */
-#tabProducao table th, #tabProducao table td,
-#tabPesagem table th, #tabPesagem table td {
-    border-bottom: none;
-}
-
-/* Aplica o estilo de borda e centralização nas tabelas de histórico e pesagem */
-#tabProducao table th, #tabProducao table td,
-#tabPesagem table th, #tabPesagem table td {
-    border: 1px solid var(--border-color);
-    text-align: center;
-    white-space: normal; /* Permite que o texto quebre a linha */
-    padding: 0.5rem;
-}
-
-/* Estiliza o cabeçalho para ter fundo azul e texto branco */
-#tabProducao table th,
-#tabPesagem table th {
-    background-color: var(--primary);
-    color: white;
-    font-weight: bold;
-}
-
-/* Adiciona o efeito de "zebra" (linhas alternadas) no corpo da tabela */
-#tabProducao tbody tr:nth-child(2n),
-#tabPesagem tbody tr:nth-child(2n) {
-    background-color: var(--bg-color);
-}
-
-/* Mantém o efeito hover, exceto na linha de detalhes */
-#tabProducao tbody tr:not(.linha-detalhes):hover,
-#tabPesagem tbody tr:hover {
-    background-color: hsl(var(--primary-hue), 80%, 90%);
-}
-
-:root {
-    --primary-hue: 210; /* Tom de azul */
-    --primary: hsl(var(--primary-hue), 80%, 55%);
-    --primary-light: hsl(var(--primary-hue), 80%, 97%);
-    --primary-dark: hsl(var(--primary-hue), 80%, 45%);
-    --accent: #ff9900;
-    --danger: #dc3545;
-    --success: #28a745;
-    --text-dark: #2c3e50;
-    --text-light: #7f8c8d;
-    --bg-color: #f8f9fa;
-    --card-bg: #ffffff;
-    --border-color: #e0e6ef;
-    --shadow-color: rgba(149, 157, 165, 0.2);
-}
-
-* { box-sizing: border-box; }
-
-body {
-    font-family: 'Inter', sans-serif; /* <-- NOVA FONTE */
-    margin: 0;
-    background: var(--bg-color);
-    color: var(--text-dark);
-    line-height: 1.6;
-}
-
-header {
-    background: var(--primary);
-    color: white;
-    padding: 1rem 1.25rem;
-    text-align: center;
-    border-bottom: 4px solid var(--primary-dark);
-}
-
-h1, h2, h3 { margin: 0 0 1rem; }
-h1 { font-size: 1.75rem; }
-h2 { font-size: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
-h3 { font-size: 1.1rem; color: var(--text-light); }
-
-.container {
-    max-width: 1100px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: var(--card-bg);
-    border-radius: 16px;
-    box-shadow: 0 8px 24px var(--shadow-color);
-    position: relative;
-}
-
-/* --- NAVEGAÇÃO SUPERIOR E ABAS --- */
-.nav-container {
-    max-width: 1100px; margin: 1rem auto; padding: 0 2rem;
-}
-.back-link {
-    display: inline-block;
-    background: var(--success);
-    color: white;
-    text-decoration: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-weight: 700;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.back-link:hover {
-    background: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-}
-.tab-nav {
-    display: flex; gap: 1rem; margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border-color);
-}
-.tab-link {
-    color: var(--text-light);
-    cursor: pointer;
-    background: none; border: none;
-    font-size: 1rem; font-weight: 500;
-    padding: 0.75rem 0.25rem;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s ease-in-out;
-}
-.tab-link:hover { color: var(--primary); }
-.tab-link.active {
-    color: var(--primary); font-weight: 700;
-    border-bottom-color: var(--primary);
-}
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* --- FORMULÁRIOS E BOTÕES --- */
-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-/* ================================================================ */
-/* ============= NOVO: AJUSTE PARA 2 COLUNAS NOS FORMS ============ */
-/* ================================================================ */
-
-  #formMassa, #formPesagem {
-    grid-template-columns: repeat(2, 1fr);
-  }
-        
-label {
-    font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem;
-    display: block; color: var(--text-light); text-transform: uppercase;
-}
-input, select, textarea {
-    width: 100%; padding: 0.8rem; border: 1px solid var(--border-color);
-    border-radius: 8px; font-size: 1rem; background-color: var(--bg-color);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--primary); background-color: var(--card-bg);
-    box-shadow: 0 0 0 3px hsla(var(--primary-hue), 80%, 55%, 0.2);
-}
-textarea { min-height: 80px; resize: vertical; }
-.full-width { grid-column: 1 / -1; }
-.form-actions {
-    grid-column: 1 / -1; display: flex;
-    justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;
-}
-button {
-    background: var(--primary); color: white; border: none;
-    padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;
-    font-weight: 700; font-size: 0.9rem;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-button:hover {
-    filter: none; background: var(--primary-dark);
-    transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-}
-button:active { transform: translateY(0); }
-button.secondary { background: #e0e6ef; color: var(--text-dark); }
-button.secondary:hover { background: #cfd8e3; }
-button.delete-btn { background: var(--danger); }
-button.edit-btn { background: var(--accent); margin-right: 5px; }
-button.excel-btn { background: var(--success); }
-
-/* --- TABELAS --- */
-.history-section { margin-top: 2.5rem; }
-.filters, .dashboard-filters {
-    display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;
-    margin-bottom: 1.5rem; padding: 1rem;
-    background-color: var(--primary-light); border-radius: 12px;
-}
-table {
-    width: 100%; border-collapse: collapse; margin-top: 1.5rem;
-}
-th, td {
-    padding: 1rem; text-align: left; font-size: 0.9rem;
-    border: none; border-bottom: 1px solid var(--border-color);
-}
-th {
-    background: none; color: var(--text-light); font-weight: 700;
-    text-transform: uppercase; font-size: 0.75rem;
-}
-tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
-.efficiency-good { color: var(--success); font-weight: bold; }
-.efficiency-ok { color: var(--accent); font-weight: bold; }
-.efficiency-bad { color: var(--danger); font-weight: bold; }
-
-/* --- SEÇÃO DE PALETES --- */
-.paletes-fieldset {
-    grid-column: 1 / -1; border: 1px solid var(--border-color);
-    border-radius: 12px; padding: 1.5rem; margin-top: 1rem;
-}
-.paletes-fieldset legend {
-    font-weight: 700; color: var(--primary);
-    padding: 0 0.5rem; font-size: 1rem; text-transform: uppercase;
-}
-.palete-entry-row {
-    display: grid; grid-template-columns: 2fr 1fr auto;
-    gap: 1rem; align-items: center; margin-bottom: 1rem;
-}
-#kgPalete {
-    background-color: var(--primary-light); font-weight: bold; color: var(--primary);
-}
-
-/* --- DETALHES EXPANSÍVEIS --- */
-.linha-detalhes { display: none; background-color: var(--primary-light); }
-.linha-detalhes td { padding: 1rem 1.5rem; text-align: left !important; }
-.detalhe-grid { 
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem; 
-}
-.detalhe-grid span { 
-    font-weight: bold; color: var(--primary);
-    display: block; margin-bottom: 0.25rem;
-}
-/* --- NOVO ESTILO PARA O BOTÃO EXPANDIR --- */
-.expand-btn {
-    background: transparent;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    display: flex; /* Essencial para alinhar o ícone SVG */
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto; /* Centraliza o botão na célula da tabela */
-    transition: transform 0.2s ease-in-out; /* Animação de rotação */
-}
-.expand-btn svg {
-    width: 14px; /* Tamanho do ícone (você pode diminuir aqui se quiser) */
-    height: 14px;
-    color: var(--text-light); /* Cor padrão do ícone */
-}
-.expand-btn:hover svg {
-    color: var(--primary); /* Cor do ícone ao passar o mouse */
-}
-.expand-btn.open {
-    transform: rotate(90deg); /* Gira o ícone 90 graus quando a classe 'open' é adicionada */
-}
-
-/* --- DASHBOARD E GRÁFICOS --- */
-.kpi-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem; margin-bottom: 2.5rem;
-}
-.kpi-card {
-    background: var(--card-bg); padding: 1.5rem; border-radius: 12px;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s ease-in-out;
-}
-.kpi-card:hover {
-    transform: translateY(-4px); box-shadow: 0 8px 24px var(--shadow-color);
-}
-.kpi-card h3 {
-    font-size: 0.9rem; color: var(--text-light); margin: 0 0 0.5rem;
-    font-weight: 500;
-}
-.kpi-card .value {
-    font-size: 2.25rem; font-weight: 700; color: var(--text-dark);
-}
-.kpi-card.efficiency .value.good { color: var(--success); }
-.kpi-card.efficiency .value.bad { color: var(--danger); }
-.chart-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 1.5rem;
-}
-.chart-container {
-    background-color: var(--card-bg); padding: 1.5rem;
-    border-radius: 12px; border: 1px solid var(--border-color);
-}
-.chart-container h3 { margin-top: 0; text-align: center; }
-
-/* --- MODAL DE CONFIGURAÇÃO --- */
-#openConfigBtn {
-    position: absolute; top: 1.5rem; right: 1.5rem;
-    background: none; border: none; color: var(--text-light); font-size: 1.5rem;
-    padding: 0.4rem 0.7rem; cursor: pointer; transition: all 0.2s;
-}
-#openConfigBtn:hover { color: var(--primary); transform: rotate(15deg); }
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); display: none;
-    justify-content: center; align-items: center; z-index: 1000;
-}
-.modal-content {
-    background: white; padding: 2rem; border-radius: 16px;
-    width: 90%; max-width: 700px;
-}
-
-/* --- Estilos de Impressão (Mantidos) --- */
-@page { size: landscape; margin: 15mm; }
-@media print {
-    body { background: #fff !important; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body > header, .nav-container, #openConfigBtn, .tab-nav, #tabProducao, #tabPesagem, .dashboard-filters, .expand-btn, .delete-btn, .edit-btn, .excel-btn, .form-actions, #printDashboardBtn {
-        display: none !important;
-    }
-    .tab-content, #tabDashboard { display: block !important; }
-    .container {
-        box-shadow: none !important; border: none !important; padding: 0 !important;
-        margin: 0 !important; width: 100% !important; max-width: 100% !important;
-    }
-    #tabDashboard::before {
-        content: 'Relatório de Produção - Fábrica de Massa';
-        display: block; text-align: center; font-size: 1.4rem; font-weight: bold;
-        margin-bottom: 1.5rem; border-bottom: 2px solid #333; padding-bottom: 1rem;
-    }
-    h2 { display: none; }
-    .kpi-grid { margin-bottom: 1rem; gap: 1rem; }
-    .kpi-card { padding: 0.8rem; border: 1px solid var(--border-color) !important; box-shadow: none !important; }
-    .kpi-card h3 { font-size: 0.8rem; margin-bottom: 0.2rem; }
-    .kpi-card .value { font-size: 1.8rem; }
-    .chart-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .chart-container { padding: 1rem; page-break-inside: avoid; box-shadow: none !important; border: 1px solid var(--border-color) !important;}
-    .chart-container h3 { font-size: 1rem; margin-bottom: 0.5rem; }
-}
-        /* ================================================================ */
-/* ============== REDUÇÃO DE TAMANHO BOTÕES DE AÇÃO =============== */
-/* ================================================================ */
-
-/* Alvo: Botões de Editar e Excluir */
-.edit-btn, .delete-btn {
-    padding: 0.3rem 0.8rem; /* Padding vertical e horizontal reduzido */
-    font-size: 0.75rem;     /* Tamanho da fonte um pouco menor */
-}
-
-/* --- NOVO ESTILO PARA O BOTÃO EXPANDIR --- */
-.expand-btn {
-    background: transparent;
-    border: none;
-    padding: 4px;
-    cursor: pointer;
-    display: flex; /* Essencial para alinhar o ícone SVG */
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto; /* Centraliza o botão na célula da tabela */
-    transition: transform 0.2s ease-in-out; /* Animação de rotação */
-}
-.expand-btn svg {
-    width: 14px; /* Tamanho do ícone (você pode diminuir aqui se quiser) */
-    height: 14px;
-    color: var(--text-light); /* Cor padrão do ícone */
-}
-.expand-btn:hover svg {
-    color: var(--primary); /* Cor do ícone ao passar o mouse */
-}
-.expand-btn.open {
-    transform: rotate(90deg); /* Gira o ícone 90 graus quando a classe 'open' é adicionada */
-}
-</style>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/massa.css">
 </head>
 <body>
-    <header>
-        <h1>Fábrica de Massa - Lançamento</h1>
-    </header>
+    <header><h1>Fábrica de Massa - Lançamento</h1></header>
 
     <div class="nav-container">
         <a href="index.html" class="back-link">❮ Voltar para Produção Cerâmica</a>
     </div>
 
     <div class="container">
-        <button id="openConfigBtn" title="Configurações de Pesos e Metas" onclick="openConfigModal()">⚙️</button>
+        <button id="openConfigBtn" title="Configurações de Pesos e Metas">⚙️</button>
         
         <div class="tab-nav">
             <button class="tab-link active" onclick="showTab('producao')">Lançamentos</button>
@@ -404,8 +37,14 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
                 <h2>Lançar Produção</h2>
                 <form id="formMassa">
                     <div> <label for="data">Data</label> <input type="date" id="data" required> </div>
-                    <div> <label for="turno">Turno</label> <select id="turno" required> <option value="">Selecione um turno</option> <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> </select> </div>
-                    <div> <label for="qtdFT">Quantidade de Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
+                    <div> <label for="turno">Turno</label> 
+                        <select id="turno" required> 
+                            <option value="">Selecione um turno</option> 
+                            <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
+                        </select> 
+                    </div>
+                    <div> <label for="qtdFT">Quantidade Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
                     <div> <label for="qtdPlacas">Quantidade de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
                     
                     <fieldset class="paletes-fieldset">
@@ -423,7 +62,7 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
                         <div class="palete-entry-row">
                              <select id="paleteSelect_3" class="palete-select"></select>
                             <input type="number" id="paleteQtd_3" class="palete-qtd" min="0" value="0" placeholder="Qtd.">
-                            <div class="palete-peso-total">Peso: <output id="paletePesoTotal_3">0.00</output> kg</div>
+                             <div class="palete-peso-total">Peso: <output id="paletePesoTotal_3">0.00</output> kg</div>
                         </div>
                     </fieldset>
                     
@@ -432,22 +71,27 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
                         <input type="number" id="kgPalete" step="0.1" min="0" readonly required>
                     </div>
 
-                    <div class="full-width"> <label for="observacao">Observação</label> <textarea id="observacao" placeholder="Alguma observação sobre a produção..."></textarea> </div>
+                    <div class="full-width"> <label for="observacao">Observação</label> <textarea id="observacao" placeholder="Alguma observação..."></textarea> </div>
                     <div class="form-actions"> <button type="button" class="secondary" onclick="limparFormMassa()">Limpar</button> <button type="submit">Lançar Produção</button> </div>
                 </form>
             </section>
+            
             <section class="history-section">
                 <h2>Histórico de Produção</h2>
                 <div class="filters">
-                    <div> <label for="filtroDataInicio">Data Início</label> <input type="date" id="filtroDataInicio"> </div> <div> <label for="filtroDataFim">Data Fim</label> <input type="date" id="filtroDataFim"> </div> <div> <label for="filtroTurno">Turno</label> <select id="filtroTurno"> <option value="">Todos os Turnos</option> <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> </select> </div>
+                    <div> <label>Data Início</label> <input type="date" id="filtroDataInicio"> </div> 
+                    <div> <label>Data Fim</label> <input type="date" id="filtroDataFim"> </div> 
+                    <div> <label>Turno</label> 
+                        <select id="filtroTurno"> 
+                            <option value="">Todos os Turnos</option> 
+                            <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
+                        </select> 
+                    </div>
                     <button class="excel-btn" onclick="exportarExcel()">Exportar Excel</button>
                 </div>
                 <table>
-                    <thead>
-                        <tr>
-                            <th></th> <th>Data</th> <th>Turno</th> <th>% FT</th> <th>% Palete</th> <th>Retrabalho (kg)</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>% FT</th><th>% Palete</th><th>Retrabalho (kg)</th></tr></thead>
                     <tbody id="tabelaHistoricoBody"></tbody>
                 </table>
             </section>
@@ -457,32 +101,19 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
             <section>
                 <h2>Lançar Peso de Palete/Mesa</h2>
                 <form id="formPesagem">
-                    <div>
-                        <label for="dataPesagem">Data</label>
-                        <input type="date" id="dataPesagem" required>
-                    </div>
-                    <div>
-                        <label for="codigoPalete">Código do Palete/Mesa</label>
-                        <input type="text" id="codigoPalete" required placeholder="Ex: P01, MESA-A">
-                    </div>
-                    <div>
-                        <label for="pesoTotalPalete">Peso Total (kg)</label>
-                        <input type="number" id="pesoTotalPalete" step="0.1" min="0" required>
-                    </div>
+                    <div><label for="dataPesagem">Data</label><input type="date" id="dataPesagem" required></div>
+                    <div><label for="codigoPalete">Código do Palete/Mesa</label><input type="text" id="codigoPalete" required placeholder="Ex: P01, MESA-A"></div>
+                    <div><label for="pesoTotalPalete">Peso Total (kg)</label><input type="number" id="pesoTotalPalete" step="0.1" min="0" required></div>
                     <div class="form-actions">
-                        <button type="button" class="secondary" onclick="document.getElementById('formPesagem').reset(); document.getElementById('dataPesagem').value = obterDataLocalFormatada();">Limpar</button>
+                        <button type="button" class="secondary" onclick="document.getElementById('formPesagem').reset();">Limpar</button>
                         <button type="submit">Lançar Peso</button>
                     </div>
                 </form>
             </section>
             <section class="history-section">
-                <h2>Histórico de Pesagem</h2>
+                 <h2>Histórico de Pesagem</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th> <th>Código</th> <th>Peso Total (kg)</th> <th>Ações</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Data</th><th>Código</th><th>Peso Total (kg)</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaPesagemBody"></tbody>
                 </table>
             </section>
@@ -490,38 +121,18 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
 
         <div id="tabDashboard" class="tab-content">
             <h2>Dashboard de Produção</h2>
-            <div class="dashboard-filters">
-                <div>
-                    <label for="dashFiltroDataInicio">Data Início</label>
-                    <input type="date" id="dashFiltroDataInicio">
-                </div>
-                 <div>
-                    <label for="dashFiltroDataFim">Data Fim</label>
-                    <input type="date" id="dashFiltroDataFim">
-                </div>
-                 <div>
-                    <label for="dashFiltroTurno">Turno</label>
-                    <select id="dashFiltroTurno">
-                        <option value="">Todos os Turnos</option>
-                        <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option>
-                    </select>
-                </div>
-                <button id="printDashboardBtn" onclick="window.print()" style="background-color: var(--accent);">🖨️ Imprimir Dashboard</button>
+            <div class="filters dashboard-filters">
+                <div><label>Data Início</label><input type="date" id="dashFiltroDataInicio"></div>
+                <div><label>Data Fim</label><input type="date" id="dashFiltroDataFim"></div>
+                <div><label>Turno</label><select id="dashFiltroTurno"><option value="">Todos</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option></select></div>
+                <button id="printDashboardBtn" onclick="window.print()" style="background-color: var(--accent);">🖨️ Imprimir</button>
             </div>
 
             <div class="kpi-grid">
-                 <div class="kpi-card">
-                    <h3>Meta FT (kg)</h3> <div class="value" id="kpiTotalMeta">---</div>
-                </div>
-                 <div class="kpi-card">
-                    <h3>Realizado FT (kg)</h3> <div class="value" id="kpiTotalRealizado">---</div>
-                </div>
-                 <div class="kpi-card efficiency">
-                    <h3>Eficiência</h3> <div class="value" id="kpiEficiencia">---</div>
-                </div>
-                 <div class="kpi-card">
-                    <h3>Retrabalho (kg)</h3> <div class="value" id="kpiRetrabalho">---</div>
-                </div>
+                 <div class="kpi-card"><h3>Meta FT (kg)</h3> <div class="value" id="kpiTotalMeta">---</div></div>
+                 <div class="kpi-card"><h3>Realizado FT (kg)</h3> <div class="value" id="kpiTotalRealizado">---</div></div>
+                 <div class="kpi-card efficiency"><h3>Eficiência</h3> <div class="value" id="kpiEficiencia">---</div></div>
+                 <div class="kpi-card"><h3>Retrabalho (kg)</h3> <div class="value" id="kpiRetrabalho">---</div></div>
             </div>
 
             <div class="chart-grid">
@@ -530,10 +141,10 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
                      <canvas id="pieChartTurnos"></canvas>
                 </div>
                  <div class="chart-container">
-                    <h3>Produção Mensal (Últimos 12 Meses)</h3>
+                    <h3>Produção Mensal (12 Meses)</h3>
                     <select id="filtroTurnoGraficoMes" style="width: 100%; margin-bottom: 1rem;">
                         <option value="">Todos os Turnos</option>
-                        <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option>
+                        <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option>
                     </select>
                     <canvas id="barChartMensal"></canvas>
                 </div>
@@ -541,494 +152,23 @@ tbody tr:not(.linha-detalhes):hover { background-color: var(--primary-light); }
         </div>
     </div>
 
-    <div id="configModal" class="modal-overlay" onclick="closeConfigModal(event)">
+    <div id="configModal" class="modal-overlay">
         <div class="modal-content">
             <h3>Configurações de Pesos e Metas</h3>
-            <div class="config-grid">
-                <div> <label for="pesoFiltro">Peso por Filtro Prensa (kg)</label> <input type="number" id="pesoFiltro" step="0.1"> </div>
-                <div> <label for="pesoPlaca">Peso por Placa (kg)</label> <input type="number" id="pesoPlaca" step="0.1"> </div>
-                <div> <label for="metaKgFT">Meta KG (Filtro Prensa)</label> <input type="number" id="metaKgFT" step="100"> </div>
-                <div> <label for="metaKgPalete">Meta KG (Paletes)</label> <input type="number" id="metaKgPalete" step="100"> </div>
+            <div class="config-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                <div> <label>Peso por Filtro (kg)</label> <input type="number" id="pesoFiltro" step="0.1"> </div>
+                <div> <label>Peso por Placa (kg)</label> <input type="number" id="pesoPlaca" step="0.1"> </div>
+                <div> <label>Meta KG (Filtro)</label> <input type="number" id="metaKgFT" step="100"> </div>
+                <div> <label>Meta KG (Paletes)</label> <input type="number" id="metaKgPalete" step="100"> </div>
             </div>
-            <div class="modal-actions">
+            <div class="modal-actions" style="display:flex; gap:1rem;">
                 <input type="password" id="configSenha" placeholder="Senha para salvar" style="flex-grow: 1;">
                 <button type="button" class="secondary" onclick="closeConfigModal(event, true)">Cancelar</button>
                 <button onclick="salvarConfiguracoes()">Salvar</button>
             </div>
         </div>
     </div>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
-            authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
-            projectId: "acompanhamento-de-produc-b68b0",
-            storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
-            messagingSenderId: "891709449679",
-            appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        window.db = db;
-        window.massaCol = collection(db, "producao_massa");
-        window.pesagemCol = collection(db, "pesagem_paletes");
-        window.addDoc = addDoc;
-        window.getDocs = getDocs;
-        window.query = query;
-        window.where = where;
-        window.orderBy = orderBy;
-        window.deleteDoc = deleteDoc;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.setDoc = setDoc;
-        window.updateDoc = updateDoc;
-        
-        console.log("Firebase conectado para a Fábrica de Massa!");
-    </script>
-    
-    <script>
-    let appConfig = {
-        pesoFiltro: 4100, pesoPlaca: 39.1,
-        metaKgFT: 12300, metaKgPalete: 12500
-    };
-    let paletesDisponiveis = new Map();
-
-    // ### REGISTRO DO PLUGIN DE RÓTULOS (DATALABELS) ###
-    Chart.register(ChartDataLabels);
-
-    function showTab(tabName) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
-        document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
-        event.target.classList.add('active');
-    }
-
-    function openConfigModal() {
-        document.getElementById('pesoFiltro').value = appConfig.pesoFiltro;
-        document.getElementById('pesoPlaca').value = appConfig.pesoPlaca;
-        document.getElementById('metaKgFT').value = appConfig.metaKgFT;
-        document.getElementById('metaKgPalete').value = appConfig.metaKgPalete;
-        document.getElementById('configModal').style.display = 'flex';
-    }
-
-    function closeConfigModal(event, force = false) {
-        if (force || event.target.id === 'configModal') {
-            document.getElementById('configModal').style.display = 'none';
-        }
-    }
-
-    function obterDataLocalFormatada() {
-        const data = new Date();
-        const ano = data.getFullYear();
-        const mes = String(data.getMonth() + 1).padStart(2, '0');
-        const dia = String(data.getDate()).padStart(2, '0');
-        return `${ano}-${mes}-${dia}`;
-    }
-
-    async function salvarConfiguracoes() {
-        if (document.getElementById('configSenha').value !== 'pb2025') {
-            alert('Senha incorreta!'); return;
-        }
-        const newConfig = {
-            pesoFiltro: parseFloat(document.getElementById('pesoFiltro').value) || 0,
-            pesoPlaca: parseFloat(document.getElementById('pesoPlaca').value) || 0,
-            metaKgFT: parseFloat(document.getElementById('metaKgFT').value) || 0,
-            metaKgPalete: parseFloat(document.getElementById('metaKgPalete').value) || 0
-        };
-        try {
-            const configDocRef = window.doc(db, "configuracoes", "massaConfig");
-            await window.setDoc(configDocRef, newConfig, { merge: true });
-            appConfig = newConfig;
-            alert('Configurações salvas com sucesso no Firebase!');
-            document.getElementById('configSenha').value = '';
-            closeConfigModal({target: {id: 'configModal'}});
-            renderizarHistorico();
-        } catch (error) {
-            console.error("Erro ao salvar configurações:", error);
-            alert("Erro ao salvar configurações.");
-        }
-    }
-
-    async function carregarConfiguracoes() {
-        try {
-            const configDocRef = window.doc(db, "configuracoes", "massaConfig");
-            const docSnap = await window.getDoc(configDocRef);
-            if (docSnap.exists()) {
-                appConfig = docSnap.data();
-            }
-        } catch(error) {
-            console.error("Erro ao carregar configurações:", error);
-        }
-    }
-
-    async function carregarOpcoesPaletes() {
-        try {
-            const q = query(window.pesagemCol, orderBy("codigo"));
-            const querySnapshot = await getDocs(q);
-            paletesDisponiveis.clear();
-            querySnapshot.forEach(doc => {
-                const data = doc.data();
-                if(data.codigo && data.peso) {
-                    paletesDisponiveis.set(data.codigo, data.peso);
-                }
-            });
-            const selects = document.querySelectorAll('.palete-select');
-            selects.forEach(select => {
-                select.innerHTML = '<option value="">Selecione...</option>';
-                paletesDisponiveis.forEach((peso, codigo) => {
-                    const option = document.createElement('option');
-                    option.value = codigo;
-                    option.textContent = `${codigo} (${peso.toFixed(2)} kg)`;
-                    option.dataset.peso = peso;
-                    select.appendChild(option);
-                });
-            });
-        } catch (error) {
-            console.error("Erro ao carregar opções de paletes:", error);
-        }
-    }
-
-    function calcularPesoTotalPaletes() {
-        let grandTotal = 0;
-        for (let i = 1; i <= 3; i++) {
-            const select = document.getElementById(`paleteSelect_${i}`);
-            const qtdInput = document.getElementById(`paleteQtd_${i}`);
-            const pesoOutput = document.getElementById(`paletePesoTotal_${i}`);
-            const selectedOption = select.options[select.selectedIndex];
-            const pesoUnitario = parseFloat(selectedOption.dataset.peso) || 0;
-            const quantidade = parseInt(qtdInput.value) || 0;
-            const subTotal = pesoUnitario * quantidade;
-            pesoOutput.textContent = subTotal.toFixed(2);
-            grandTotal += subTotal;
-        }
-        document.getElementById('kgPalete').value = grandTotal.toFixed(2);
-    }
-    
-    function limparFormMassa() {
-        document.getElementById('formMassa').reset();
-        document.getElementById('data').value = obterDataLocalFormatada();
-        calcularPesoTotalPaletes();
-    }
-
-   document.getElementById('formMassa').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const kgPaleteReal = parseFloat(document.getElementById('kgPalete').value);
-        if (kgPaleteReal <= 0) {
-            alert("O KG Total de Paletes deve ser maior que zero. Lance ao menos um palete.");
-            return;
-        }
-        const qtdFT = parseInt(document.getElementById('qtdFT').value);
-        const qtdPlacas = parseInt(document.getElementById('qtdPlacas').value);
-        const kgCalculado = (qtdFT * appConfig.pesoFiltro) + (qtdPlacas * appConfig.pesoPlaca);
-        
-        // 1. O cálculo original é feito
-        const retrabalhoCalculado = kgPaleteReal - kgCalculado;
-
-        // 2. AQUI GARANTIMOS QUE O VALOR A SER SALVO SEJA 0 SE FOR NEGATIVO
-        const retrabalhoKg = Math.max(0, retrabalhoCalculado);
-
-        const novoRegistro = {
-            data: document.getElementById('data').value,
-            turno: document.getElementById('turno').value,
-            qtdFT,
-            qtdPlacas,
-            kgPalete: kgPaleteReal,
-            observacao: document.getElementById('observacao').value,
-            kgCalculado,
-            retrabalhoKg, // É este valor (já corrigido) que é enviado ao banco de dados
-            timestamp: new Date().toISOString(),
-            metaKgFT: appConfig.metaKgFT,
-            metaKgPalete: appConfig.metaKgPalete
-        };
-        try {
-            await window.addDoc(window.massaCol, novoRegistro);
-            alert('Produção lançada com sucesso! ✅');
-            renderizarHistorico();
-            limparFormMassa();
-        } catch (error) {
-            console.error("Erro ao salvar no Firebase: ", error);
-            alert("Erro ao salvar. Verifique o console. ❌");
-        }
-    });
-    
-    async function renderizarHistorico() {
-        const tbody = document.getElementById('tabelaHistoricoBody');
-        tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
-        const filtroDataInicio = document.getElementById('filtroDataInicio').value;
-        const filtroDataFim = document.getElementById('filtroDataFim').value;
-        const filtroTurno = document.getElementById('filtroTurno').value;
-        let queryConstraints = [orderBy("data", "desc"), orderBy("timestamp", "desc")];
-        if (filtroDataInicio) queryConstraints.push(where("data", ">=", filtroDataInicio));
-        if (filtroDataFim) queryConstraints.push(where("data", "<=", filtroDataFim));
-        if (filtroTurno) queryConstraints.push(where("turno", "==", filtroTurno));
-        try {
-            const q = query(window.massaCol, ...queryConstraints);
-            const querySnapshot = await getDocs(q);
-            const dadosFiltrados = querySnapshot.docs;
-            tbody.innerHTML = '';
-            if (dadosFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6">Nenhum registro encontrado.</td></tr>`;
-                return;
-            }
-            dadosFiltrados.forEach(doc => {
-                const reg = doc.data();
-                const docId = doc.id;
-                const metaFTDoRegistro = reg.metaKgFT || appConfig.metaKgFT;
-                const metaPaleteDoRegistro = reg.metaKgPalete || appConfig.metaKgPalete;
-                const eficFT = (reg.kgCalculado / (metaFTDoRegistro || 1)) * 100;
-                const eficPalete = (reg.kgPalete / (metaPaleteDoRegistro || 1)) * 100;
-                const getEficClass = (perc) => {
-                    if (perc >= 98) return 'efficiency-good';
-                    if (perc >= 90) return 'efficiency-ok';
-                    return 'efficiency-bad';
-                };
-                let retrabalhoValor = reg.retrabalhoKg;
-                let retrabalhoClasse = '';
-                if (retrabalhoValor != null) {
-                    if (retrabalhoValor > 0) retrabalhoClasse = 'efficiency-good';
-                    if (retrabalhoValor < 0) retrabalhoClasse = 'efficiency-bad';
-                    retrabalhoValor = `${retrabalhoValor.toFixed(2)}`;
-                } else {
-                    retrabalhoValor = 'N/A';
-                }
-                const trPrincipal = document.createElement('tr');
-                trPrincipal.innerHTML = `
-    <td><button class="expand-btn" onclick="toggleDetalhes('${docId}')"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg></button></td>
-    <td>${new Date(reg.data + 'T03:00:00').toLocaleDateString('pt-BR')}</td>
-                    <td>${reg.turno}</td>
-                    <td class="${getEficClass(eficFT)}">${eficFT.toFixed(2)}%</td>
-                    <td class="${getEficClass(eficPalete)}">${eficPalete.toFixed(2)}%</td>
-                    <td class="${retrabalhoClasse}">${retrabalhoValor}</td>
-                `;
-                const trDetalhes = document.createElement('tr');
-                trDetalhes.id = `detalhes-${docId}`;
-                trDetalhes.className = 'linha-detalhes';
-                trDetalhes.innerHTML = `
-                    <td colspan="6">
-                        <div class="detalhe-grid">
-                            <div><span>Filtro Prensa (kg):</span> ${reg.kgCalculado.toFixed(2)} kg</div>
-                            <div><span>Palete (kg):</span> ${reg.kgPalete.toFixed(2)} kg</div>
-                            <div><span>Retrabalho (kg):</span> ${reg.retrabalhoKg ? reg.retrabalhoKg.toFixed(2) + ' kg' : 'N/A'}</div>
-                            <div><span>Qtd. Filtros (FT):</span> ${reg.qtdFT}</div>
-                            <div><span>Qtd. Placas:</span> ${reg.qtdPlacas}</div>
-                            <div><span>Meta FT (kg):</span> ${reg.metaKgFT ? reg.metaKgFT.toFixed(2) + ' kg' : 'N/A'}</div>
-                            <div><span>Meta Palete (kg):</span> ${reg.metaKgPalete ? reg.metaKgPalete.toFixed(2) + ' kg' : 'N/A'}</div>
-                            <div style="grid-column: 1 / -1;"><span>Observação:</span> ${reg.observacao || 'Nenhuma'}</div>
-                            <div>
-                                <span>Ações:</span> 
-                                <button class="delete-btn" onclick="deletarRegistro('${docId}')">Excluir</button>
-                            </div>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(trPrincipal);
-                tbody.appendChild(trDetalhes);
-            });
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-            tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar dados.</td></tr>`;
-        }
-    }
-
-    document.getElementById('formPesagem').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const novoRegistro = {
-            data: document.getElementById('dataPesagem').value,
-            codigo: document.getElementById('codigoPalete').value.trim().toUpperCase(),
-            peso: parseFloat(document.getElementById('pesoTotalPalete').value),
-            timestamp: new Date().toISOString()
-        };
-        if(!novoRegistro.codigo) {
-            alert("O código do palete não pode estar em branco.");
-            return;
-        }
-        try {
-            await window.addDoc(window.pesagemCol, novoRegistro);
-            alert('Pesagem lançada com sucesso! ✅');
-            renderizarHistoricoPesagem();
-            carregarOpcoesPaletes();
-            this.reset();
-            document.getElementById('dataPesagem').value = obterDataLocalFormatada();
-        } catch (error) {
-            console.error("Erro ao salvar pesagem:", error);
-            alert("Erro ao salvar a pesagem. ❌");
-        }
-    });
-
-    // --- LÓGICA DO DASHBOARD ---
-    let pieChartTurnosInstance, barChartMensalInstance;
-
-    async function atualizarDashboard() {
-        const dataInicio = document.getElementById('dashFiltroDataInicio').value;
-        const dataFim = document.getElementById('dashFiltroDataFim').value;
-        const turno = document.getElementById('dashFiltroTurno').value;
-        if (!dataInicio || !dataFim) return;
-        ['kpiTotalMeta', 'kpiTotalRealizado', 'kpiEficiencia', 'kpiRetrabalho'].forEach(id => document.getElementById(id).textContent = '...');
-        try {
-            let qConstraints = [where("data", ">=", dataInicio), where("data", "<=", dataFim)];
-            if (turno) qConstraints.push(where("turno", "==", turno));
-            const q = query(window.massaCol, ...qConstraints);
-            const querySnapshot = await getDocs(q);
-            const dados = querySnapshot.docs.map(doc => doc.data());
-            calcularKPIs(dados);
-            gerarGraficoPizzaTurnos(dados);
-        } catch (error) {
-            console.error("Erro ao atualizar dashboard:", error);
-            alert("Não foi possível carregar os dados do dashboard.");
-        }
-    }
-
-    function calcularKPIs(dados) {
-        const totais = dados.reduce((acc, reg) => {
-            acc.meta += reg.metaKgFT || 0;
-            acc.realizado += reg.kgCalculado || 0;
-            acc.retrabalho += reg.retrabalhoKg || 0;
-            return acc;
-        }, { meta: 0, realizado: 0, retrabalho: 0 });
-        const eficiencia = totais.meta > 0 ? (totais.realizado / totais.meta) * 100 : 0;
-        document.getElementById('kpiTotalMeta').textContent = totais.meta.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-        document.getElementById('kpiTotalRealizado').textContent = totais.realizado.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-        const eficienciaEl = document.getElementById('kpiEficiencia');
-        eficienciaEl.textContent = `${eficiencia.toFixed(2)}%`;
-        eficienciaEl.className = 'value';
-        if (eficiencia >= 98) eficienciaEl.classList.add('good'); else eficienciaEl.classList.add('bad');
-        document.getElementById('kpiRetrabalho').textContent = totais.retrabalho.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
-    }
-
-    function gerarGraficoPizzaTurnos(dados) {
-        const producaoPorTurno = dados.reduce((acc, reg) => {
-            if (!acc[reg.turno]) acc[reg.turno] = 0;
-            acc[reg.turno] += reg.kgPalete || 0;
-            return acc;
-        }, {});
-        if (pieChartTurnosInstance) pieChartTurnosInstance.destroy();
-        const ctx = document.getElementById('pieChartTurnos').getContext('2d');
-        pieChartTurnosInstance = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: Object.keys(producaoPorTurno),
-                datasets: [{
-                    label: 'Produção (kg)',
-                    data: Object.values(producaoPorTurno),
-                    backgroundColor: ['#0077cc', '#28a745', '#ff9900', '#dc3545', '#6c757d', '#17a2b8', '#f012be'],
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'top' },
-                    datalabels: {
-                        formatter: (value, ctx) => {
-                            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            if (sum === 0) return '0.00%';
-                            const percentage = (value * 100 / sum).toFixed(2) + '%';
-                            return percentage;
-                        },
-                        color: '#fff',
-                        font: { weight: 'bold', size: 14 }
-                    }
-                }
-            }
-        });
-    }
-
-    async function gerarGraficoProducaoMensal() {
-        const turnoFiltro = document.getElementById('filtroTurnoGraficoMes').value;
-        const hoje = new Date();
-        const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), 1);
-        const dataInicioStr = dozeMesesAtras.toISOString().split('T')[0];
-        try {
-            let qConstraints = [where("data", ">=", dataInicioStr)];
-            if (turnoFiltro) qConstraints.push(where("turno", "==", turnoFiltro));
-            // ### CORREÇÃO AQUI: Usando window.massaCol em vez de massaCol ###
-            const q = query(window.massaCol, ...qConstraints);
-            const querySnapshot = await getDocs(q);
-            const dados = querySnapshot.docs.map(doc => doc.data());
-            const producaoPorMes = {};
-            for(let i=0; i<12; i++) {
-                const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-                producaoPorMes[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] = 0;
-            }
-            dados.forEach(reg => {
-                const mesAno = reg.data.substring(0, 7);
-                if (producaoPorMes[mesAno] !== undefined) producaoPorMes[mesAno] += reg.kgPalete;
-            });
-            const labels = Object.keys(producaoPorMes).reverse();
-            const data = Object.values(producaoPorMes).reverse();
-            const labelsFormatados = labels.map(l => `${l.substring(5, 7)}/${l.substring(2, 4)}`);
-            if (barChartMensalInstance) barChartMensalInstance.destroy();
-            const ctx = document.getElementById('barChartMensal').getContext('2d');
-            barChartMensalInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labelsFormatados,
-                    datasets: [{
-                        label: 'Produção Total (kg)',
-                        data: data,
-                        backgroundColor: 'rgba(0, 119, 204, 0.7)',
-                        borderColor: 'rgba(0, 119, 204, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { 
-                    scales: { y: { beginAtZero: true } },
-                    plugins: {
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            color: '#444',
-                            font: { weight: 'bold' },
-                            formatter: (value) => {
-                                return value > 0 ? value.toLocaleString('pt-BR') : '';
-                            }
-                        }
-                    }
-                }
-            });
-        } catch (error) { console.error("Erro ao gerar gráfico mensal:", error); }
-    }
-    
-    document.addEventListener('DOMContentLoaded', async () => {
-        const hojeStr = obterDataLocalFormatada();
-        ['data', 'filtroDataInicio', 'filtroDataFim', 'dataPesagem', 'dashFiltroDataInicio', 'dashFiltroDataFim'].forEach(id => document.getElementById(id).value = hojeStr);
-        document.querySelectorAll('.palete-select, .palete-qtd').forEach(el => el.addEventListener('input', calcularPesoTotalPaletes));
-        ['filtroDataInicio', 'filtroDataFim', 'filtroTurno'].forEach(id => document.getElementById(id).addEventListener('change', renderizarHistorico));
-        ['dashFiltroDataInicio', 'dashFiltroDataFim', 'dashFiltroTurno'].forEach(id => document.getElementById(id).addEventListener('change', atualizarDashboard));
-        document.getElementById('filtroTurnoGraficoMes').addEventListener('change', gerarGraficoProducaoMensal);
-        
-        await carregarConfiguracoes(); 
-        await carregarOpcoesPaletes();
-        
-        renderizarHistorico();
-        renderizarHistoricoPesagem();
-        calcularPesoTotalPaletes();
-        
-        await atualizarDashboard();
-        await gerarGraficoProducaoMensal();
-    });
-
-    // --- Funções que não mudaram ---
-window.toggleDetalhes = function(docId) {
-    const detalhesRow = document.getElementById(`detalhes-${docId}`);
-    const btn = event.target.closest('.expand-btn'); // Pega o botão clicado
-    
-    if (detalhesRow.style.display === "table-row") {
-        detalhesRow.style.display = "none";
-        btn.classList.remove('open'); // Remove a classe que gira o ícone
-    } else {
-        detalhesRow.style.display = "table-row";
-        btn.classList.add('open'); // Adiciona a classe que gira o ícone
-    }
-};    window.deletarRegistro=async function(d){const t=prompt("Para confirmar a exclusão, digite a senha:");if(null!==t&&"pb2025"!==t)alert("Senha incorreta. Exclusão cancelada.");else if(confirm("Tem certeza que deseja excluir este lançamento do banco de dados?"))try{await window.deleteDoc(window.doc(db,"producao_massa",d)),alert("Registro excluído com sucesso!"),renderizarHistorico()}catch(d){console.error("Erro ao deletar do Firebase: ",d),alert("Erro ao excluir. Verifique o console.")}};
-    async function renderizarHistoricoPesagem(){const d=document.getElementById("tabelaPesagemBody");d.innerHTML='<tr><td colspan="4">Carregando dados...</td></tr>';try{const t=await window.getDocs(window.query(window.pesagemCol,window.orderBy("codigo")));if(d.innerHTML="",t.empty){d.innerHTML='<tr><td colspan="4">Nenhum registro de pesagem encontrado.</td></tr>';return}t.forEach(t=>{const o=t.data(),e=t.id,n=document.createElement("tr");n.innerHTML=`\n <td>${new Date(o.data+"T03:00:00").toLocaleDateString("pt-BR")}</td>\n <td>${o.codigo}</td>\n <td>${o.peso.toFixed(2)} kg</td>\n <td>\n <button class="edit-btn" onclick='editarRegistroPesagem("${e}", ${JSON.stringify(o)})'>Editar</button>\n <button class="delete-btn" onclick="deletarRegistroPesagem('${e}')">Excluir</button>\n </td>\n `,d.appendChild(n)})}catch(t){console.error("Erro ao buscar histórico de pesagem: ",t),d.innerHTML='<tr><td colspan="4">Erro ao carregar dados.</td></tr>'}};
-    window.editarRegistroPesagem=async function(d,t){const o=prompt("Para editar, por favor, insira a senha:");if("pb2025"!==o)return void alert("Senha incorreta. Operação cancelada.");const e=prompt("Editar Data (AAAA-MM-DD):",t.data);if(null===e)return;const n=prompt("Editar Código:",t.codigo);if(null===n)return;const a=prompt("Editar Peso (kg):",t.peso);if(null===a)return;const r={...t,data:e,codigo:n.trim().toUpperCase(),peso:parseFloat(a)};if(isNaN(r.peso)||!r.codigo)return void alert("Dados inválidos. A edição foi cancelada.");try{await window.setDoc(window.doc(db,"pesagem_paletes",d),r),alert("Registro atualizado com sucesso!"),renderizarHistoricoPesagem(),carregarOpcoesPaletes()}catch(d){console.error("Erro ao atualizar registro: ",d),alert("Falha ao atualizar o registro.")}};
-    window.deletarRegistroPesagem=async function(d){const t=prompt("Para excluir, por favor, insira a senha:");if("pb2025"!==t)return void alert("Senha incorreta. Operação cancelada.");if(confirm("Tem certeza que deseja excluir este registro de pesagem?"))try{await window.deleteDoc(window.doc(db,"pesagem_paletes",d)),alert("Registro excluído com sucesso!"),renderizarHistoricoPesagem(),carregarOpcoesPaletes()}catch(d){console.error("Erro ao excluir registro de pesagem:",d),alert("Falha ao excluir o registro.")}};
-    async function exportarExcel(){alert("Preparando o arquivo Excel com dados do Firebase...");const d=document.getElementById("filtroDataInicio").value,t=document.getElementById("filtroDataFim").value,o=document.getElementById("filtroTurno").value;let e=[window.orderBy("data","desc"),window.orderBy("timestamp","desc")];d&&e.push(window.where("data",">=",d)),t&&e.push(window.where("data","<=",t)),o&&e.push(window.where("turno","==",o));try{const d=await window.getDocs(window.query(window.massaCol,...e)),t=d.docs.map(d=>d.data());if(0===t.length)return void alert("Nenhum dado encontrado para exportar.");const o=t.map(d=>{var t;const o=d.metaKgFT||appConfig.metaKgFT,e=d.metaKgPalete||appConfig.metaKgPalete,n=(null!==(t=d.retrabalhoKg)?t:d.kgPalete-d.kgCalculado);return{'Data':new Date(d.data+"T03:00:00").toLocaleDateString("pt-BR"),'Turno':d.turno,'Qtd Filtros (FT)':d.qtdFT,'Qtd Placas':d.qtdPlacas,'KG Calculado':d.kgCalculado.toFixed(2),'KG Palete (Real)':d.kgPalete.toFixed(2),'Retrabalho (kg)':n.toFixed(2),'Meta FT (kg)':o.toFixed(2),'Meta Palete (kg)':e.toFixed(2),'% Eficiência FT':(d.kgCalculado/(o||1)*100).toFixed(2)+"%",'% Eficiência Palete':(d.kgPalete/(e||1)*100).toFixed(2)+"%",'Observação':d.observacao}}),n=XLSX.utils.json_to_sheet(o),a=XLSX.utils.book_new();XLSX.utils.book_append_sheet(a,n,"Histórico de Massa"),XLSX.writeFile(a,`Historico_Massa_${obterDataLocalFormatada()}.xlsx`)}catch(d){console.error("Erro ao exportar dados do Firebase: ",d),alert("Ocorreu um erro ao preparar o arquivo.")}};
-    </script>
+    <script type="module" src="js/massa.js"></script>
 </body>
 </html>
