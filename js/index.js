@@ -672,3 +672,53 @@ function carregarMaquinas() {
         maqSelect.innerHTML = '<option value="">Selecione o setor primeiro</option>';
     }
 }
+
+// =========================================================
+// LÓGICA DE INSTALAÇÃO DO PWA (POP-UP)
+// =========================================================
+
+let deferredPrompt; // Variável para guardar o evento de instalação
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // 1. Impede o mini-infobar padrão do navegador de aparecer
+    e.preventDefault();
+    // 2. Guarda o evento para usar depois
+    deferredPrompt = e;
+    
+    // 3. Verifica se o usuário já dispensou o pop-up recentemente
+    const jaViu = localStorage.getItem('dispensouInstalacao');
+    
+    if (!jaViu) {
+        // 4. Se nunca viu, mostra o pop-up personalizado
+        document.getElementById('installModal').style.display = 'flex';
+    }
+});
+
+// Botão "Instalar" do nosso Pop-up
+document.getElementById('btnInstalarApp').addEventListener('click', async () => {
+    if (deferredPrompt) {
+        // Mostra o prompt nativo do navegador
+        deferredPrompt.prompt();
+        // Espera a escolha do usuário
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`Usuário escolheu: ${outcome}`);
+        // Limpa a variável
+        deferredPrompt = null;
+        // Fecha o nosso modal
+        document.getElementById('installModal').style.display = 'none';
+    }
+});
+
+// Função para fechar e não mostrar de novo tão cedo
+window.fecharModalInstalacao = function() {
+    document.getElementById('installModal').style.display = 'none';
+    // Salva na memória para não incomodar o usuário na próxima recarga
+    localStorage.setItem('dispensouInstalacao', 'sim');
+}
+
+// Opcional: Se o app for instalado com sucesso, esconde o modal pra sempre
+window.addEventListener('appinstalled', () => {
+    document.getElementById('installModal').style.display = 'none';
+    localStorage.setItem('dispensouInstalacao', 'instalado');
+    console.log('App instalado com sucesso!');
+});
