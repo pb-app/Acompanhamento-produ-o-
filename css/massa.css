@@ -1,0 +1,83 @@
+/* --- NAVEGAÇÃO SUPERIOR E ABAS --- */
+.nav-container { max-width: 1100px; margin: 1rem auto; padding: 0 2rem; }
+.back-link {
+    display: inline-block; background: var(--success); color: white;
+    text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px;
+    font-weight: 700; transition: all 0.2s;
+}
+.back-link:hover { background: #218838; transform: translateY(-2px); }
+
+.tab-nav {
+    display: flex; gap: 1rem; margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.tab-link {
+    color: var(--text-light); cursor: pointer; background: none; border: none;
+    font-size: 1rem; font-weight: 500; padding: 0.75rem 0.25rem;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+}
+.tab-link:hover { color: var(--primary); }
+.tab-link.active {
+    color: var(--primary); font-weight: 700; border-bottom-color: var(--primary);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* --- FORMULÁRIOS ESPECÍFICOS --- */
+#formMassa, #formPesagem { grid-template-columns: repeat(2, 1fr); }
+
+/* Seção de Paletes */
+.paletes-fieldset {
+    grid-column: 1 / -1; border: 1px solid var(--border-color);
+    border-radius: 12px; padding: 1.5rem; margin-top: 1rem;
+}
+.paletes-fieldset legend {
+    font-weight: 700; color: var(--primary); padding: 0 0.5rem;
+    font-size: 1rem; text-transform: uppercase;
+}
+.palete-entry-row {
+    display: grid; grid-template-columns: 2fr 1fr auto;
+    gap: 1rem; align-items: center; margin-bottom: 1rem;
+}
+.palete-peso-total { font-weight: bold; font-size: 0.9rem; color: var(--text-dark); }
+#kgPalete { background-color: var(--primary-light); font-weight: bold; color: var(--primary); }
+
+/* --- BOTÃO DE CONFIGURAÇÃO --- */
+#openConfigBtn {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    background: none; border: none; color: var(--text-light); font-size: 1.5rem;
+    padding: 0.4rem; cursor: pointer; transition: all 0.2s;
+}
+#openConfigBtn:hover { color: var(--primary); transform: rotate(15deg); }
+
+/* --- DASHBOARD E GRÁFICOS --- */
+.kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem; margin-bottom: 2.5rem;
+}
+.kpi-card {
+    background: var(--card-bg); padding: 1.5rem; border-radius: 12px;
+    border: 1px solid var(--border-color); text-align: center;
+}
+.kpi-card h3 { font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; }
+.kpi-card .value { font-size: 2.25rem; font-weight: 700; color: var(--text-dark); }
+.kpi-card.efficiency .value.good { color: var(--success); }
+.kpi-card.efficiency .value.bad { color: var(--danger); }
+
+.chart-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+.chart-container {
+    background-color: var(--card-bg); padding: 1.5rem;
+    border-radius: 12px; border: 1px solid var(--border-color);
+}
+
+/* --- ESTILOS DE IMPRESSÃO --- */
+@media print {
+    body { background: #fff !important; }
+    header, .nav-container, #openConfigBtn, .tab-nav, #tabProducao, #tabPesagem, .filters, .form-actions, button { display: none !important; }
+    .tab-content, #tabDashboard { display: block !important; }
+    .container { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    .chart-container { page-break-inside: avoid; border: 1px solid #ddd !important; }
+}
