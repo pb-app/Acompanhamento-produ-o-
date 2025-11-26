@@ -141,17 +141,32 @@ function calcularPesoTotalPaletes() {
     document.getElementById('kgPalete').value = grandTotal.toFixed(2);
 }
 
-// --- CRUD PRODUÇÃO ---
+// =========================================================
+// ATUALIZAÇÃO: SALVAR PRODUÇÃO MASSA (COM PROTEÇÃO)
+// =========================================================
 async function salvarProducaoMassa(event) {
     event.preventDefault();
+
+    // 1. Bloqueia botão
+    const btnSalvar = document.querySelector('#formMassa button[type="submit"]');
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
+
     const kgPaleteReal = parseFloat(document.getElementById('kgPalete').value);
-    if (kgPaleteReal <= 0) return alert("O KG Total de Paletes deve ser maior que zero.");
+    
+    // Se validação falhar, precisamos desbloquear o botão antes de sair
+    if (kgPaleteReal <= 0) {
+        alert("O KG Total de Paletes deve ser maior que zero.");
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+        return;
+    }
 
     const qtdFT = parseInt(document.getElementById('qtdFT').value);
     const qtdPlacas = parseInt(document.getElementById('qtdPlacas').value);
     const kgCalculado = (qtdFT * appConfig.pesoFiltro) + (qtdPlacas * appConfig.pesoPlaca);
     
-    // Cálculo do Retrabalho (Lógica original mantida: não salva negativo)
     const retrabalhoCalculado = kgPaleteReal - kgCalculado;
     const retrabalhoKg = Math.max(0, retrabalhoCalculado);
 
@@ -170,9 +185,15 @@ async function salvarProducaoMassa(event) {
         alert('Produção lançada! ✅');
         renderizarHistorico();
         window.limparFormMassa();
-    } catch (e) { console.error(e); alert("Erro ao salvar."); }
+    } catch (e) { 
+        console.error(e); 
+        alert("Erro ao salvar."); 
+    } finally {
+        // 2. Libera botão
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+    }
 }
-
 async function renderizarHistorico() {
     const tbody = document.getElementById('tabelaHistoricoBody');
     tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
@@ -239,16 +260,32 @@ window.deletarRegistroMassa = async function(id) {
     if(confirm("Excluir?")) { await deleteDoc(doc(db, "producao_massa", id)); renderizarHistorico(); }
 }
 
-// --- CRUD PESAGEM ---
+// =========================================================
+// ATUALIZAÇÃO: SALVAR PESAGEM (COM PROTEÇÃO)
+// =========================================================
 async function salvarPesagem(e) {
     e.preventDefault();
+
+    // 1. Bloqueia botão
+    const btnSalvar = document.querySelector('#formPesagem button[type="submit"]');
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
+
     const reg = {
         data: document.getElementById('dataPesagem').value,
         codigo: document.getElementById('codigoPalete').value.trim().toUpperCase(),
         peso: parseFloat(document.getElementById('pesoTotalPalete').value),
         timestamp: new Date().toISOString()
     };
-    if(!reg.codigo) return alert("Código obrigatório");
+
+    if(!reg.codigo) {
+        alert("Código obrigatório");
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+        return;
+    }
+
     try {
         await addDoc(pesagemCol, reg);
         alert('Salvo! ✅');
@@ -256,7 +293,14 @@ async function salvarPesagem(e) {
         carregarOpcoesPaletes();
         document.getElementById('formPesagem').reset();
         document.getElementById('dataPesagem').value = obterDataLocalFormatada();
-    } catch(e) { console.error(e); alert("Erro ao salvar pesagem."); }
+    } catch(e) { 
+        console.error(e); 
+        alert("Erro ao salvar pesagem."); 
+    } finally {
+        // 2. Libera botão
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+    }
 }
 
 async function renderizarHistoricoPesagem() {
