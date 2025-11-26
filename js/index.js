@@ -34,7 +34,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     // Event Listeners
-    document.getElementById("setor").addEventListener("change", carregarOperadores);
+   // Quando mudar o setor, carrega Operadores E Máquinas
+    document.getElementById("setor").addEventListener("change", () => {
+        carregarOperadores();
+        carregarMaquinas();
+    });
     document.getElementById("formOperador").addEventListener("submit", cadastrarOperador);
     document.getElementById('filtroSetor').addEventListener('change', () => atualizarDatalistMaquina('filtroSetor', 'listaMaquinasFiltro'));
     document.getElementById('dashFiltroSetor').addEventListener('change', () => atualizarDatalistMaquina('dashFiltroSetor', 'listaMaquinasDash'));
