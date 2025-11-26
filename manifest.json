@@ -1,0 +1,28 @@
+{
+  "name": "Acompanhamento de Produção",
+  "short_name": "Produção",
+  "description": "Uma aplicação para acompanhar a produção.",
+  "icons": [
+    {
+      "src": "/icons/icon-180x180.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "https://pb-app.github.io/Acompanhamento-produ-o-/#",
+  "scope": "https://pb-app.github.io/Acompanhamento-produ-o-/",
+  "display": "standalone",
+  "background_color": "#e6f0ff",
+  "theme_color": "#0077cc"
+}
