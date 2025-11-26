@@ -136,9 +136,18 @@ async function carregarOperadores() {
     }
 }
 
-// SALVAR LANÇAMENTO
+// =========================================================
+// ATUALIZAÇÃO: SALVAR LANÇAMENTO (COM PROTEÇÃO DUPLO CLIQUE)
+// =========================================================
 async function salvarLancamentoProducao(e) {
     e.preventDefault();
+    
+    // 1. Pega o botão de salvar e bloqueia
+    const btnSalvar = document.querySelector('#formProducao button[type="submit"]');
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
+
     const data = {
         data: document.getElementById("data").value,
         setor: document.getElementById("setor").value,
@@ -153,6 +162,7 @@ async function salvarLancamentoProducao(e) {
         observacao: document.getElementById("observacao").value,
         timestamp: new Date().toISOString()
     };
+
     try {
         await addDoc(producoesCol, data);
         alert("Lançamento salvo com sucesso no Firebase! ✅");
@@ -160,14 +170,27 @@ async function salvarLancamentoProducao(e) {
     } catch (error) {
         console.error("Erro ao adicionar documento: ", error);
         alert("Erro ao salvar o lançamento. Verifique o console. ❌"); 
+    } finally {
+        // 2. Sempre libera o botão no final, mesmo se der erro
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
     }
 }
 
-// CADASTRAR OPERADOR
+// =========================================================
+// ATUALIZAÇÃO: CADASTRAR OPERADOR (COM PROTEÇÃO DUPLO CLIQUE)
+// =========================================================
 async function cadastrarOperador(e) {
     e.preventDefault();
+    
     const nome = document.getElementById("nomeOperador").value.trim();
     if (!nome) return;
+
+    // 1. Bloqueia botão
+    const btnSalvar = document.querySelector('#formOperador button[type="submit"]');
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
 
     const novoOperador = {
         dataCadastro: document.getElementById("dataCadastroOp").value,
@@ -185,6 +208,10 @@ async function cadastrarOperador(e) {
     } catch (error) {
         console.error("Erro: ", error);
         alert("Erro ao cadastrar.");
+    } finally {
+        // 2. Libera botão
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
     }
 }
 
