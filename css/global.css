@@ -125,3 +125,18 @@ th { color: var(--text-light); font-weight: 700; text-transform: uppercase; font
 .expand-btn svg { width: 14px; height: 14px; color: var(--text-light); }
 .expand-btn:hover svg { color: var(--primary); }
 .expand-btn.open { transform: rotate(90deg); }
+
+/* ================================================================ */
+/* =========== CORREÇÃO: LINHAS DE DETALHES (EXPANSÃO) ============ */
+/* ================================================================ */
+
+/* Garante que a linha de detalhes comece invisível */
+.linha-detalhes {
+    display: none;
+    background-color: var(--primary-light);
+}
+
+/* Espaçamento interno para ficar bonito quando abrir */
+.linha-detalhes td {
+    padding: 1rem 1.5rem;
+}
