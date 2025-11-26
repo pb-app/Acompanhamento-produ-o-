@@ -482,7 +482,10 @@ window.exportarExcel = async function() {
     } catch(e){ console.error(e); alert("Erro na exportação."); }
 }
 
-// --- DASHBOARD ---
+// =========================================================
+// ATUALIZAÇÃO: DASHBOARD COMPLETO (KPIs + GRÁFICO 12 MESES)
+// =========================================================
+
 window.atualizarDashboard = async function(){
     const filtro = {
         dataInicio: document.getElementById("dashFiltroDataInicio").value,
@@ -494,7 +497,7 @@ window.atualizarDashboard = async function(){
         operador: document.getElementById("dashFiltroOperador").value.toLowerCase()
     };
     
-    // Simplificado para exemplo: busca tudo no range de data e filtra na memória
+    // 1. BUSCA DADOS PARA KPIS E GRÁFICO DE PIZZA (RESPEITA DATA INICIO/FIM)
     let q = query(producoesCol, where("data", ">=", filtro.dataInicio), where("data", "<=", filtro.dataFim));
     
     try {
@@ -502,17 +505,38 @@ window.atualizarDashboard = async function(){
         const dados = snap.docs.map(d=>d.data()).filter(d => 
             (!filtro.setor || d.setor === filtro.setor) &&
             (!filtro.turno || d.turno === filtro.turno) &&
+            (!filtro.maquina || (d.maquina && d.maquina.toLowerCase().includes(filtro.maquina.toLowerCase()))) &&
+            (!filtro.refCpb || (d.refCpb && d.refCpb.includes(filtro.refCpb))) &&
             (!filtro.operador || (d.operador && d.operador.toLowerCase().includes(filtro.operador)))
         );
 
-        // Atualiza KPIs
+        // --- CÁLCULO DOS KPIS ---
         let prev=0, real=0, quebra=0;
-        dados.forEach(d => { prev+=d.prevista||0; real+=d.realizada||0; quebra+=d.quebras||0; });
-        document.getElementById('kpiPrevisto').innerText = prev;
-        document.getElementById('kpiRealizado').innerText = real;
-        document.getElementById('kpiQuebras').innerText = quebra;
+        dados.forEach(d => { 
+            prev += d.prevista || 0; 
+            real += d.realizada || 0; 
+            quebra += d.quebras || 0; 
+        });
+
+        // Atualiza os cartões de números absolutos
+        document.getElementById('kpiPrevisto').innerText = prev.toLocaleString('pt-BR');
+        document.getElementById('kpiRealizado').innerText = real.toLocaleString('pt-BR');
+        document.getElementById('kpiQuebras').innerText = quebra.toLocaleString('pt-BR');
         
-        // Atualiza Gráfico Pizza
+        // Atualiza as Porcentagens (CORREÇÃO DO "N/A")
+        const totalProducao = real + quebra;
+        const percRealPrev = prev > 0 ? ((real / prev) * 100).toFixed(2) + '%' : '0%';
+        const percQuebraTotal = totalProducao > 0 ? ((quebra / totalProducao) * 100).toFixed(2) + '%' : '0%';
+
+        document.getElementById('kpiPercRealPrev').innerText = percRealPrev;
+        document.getElementById('kpiPercQuebraTotal').innerText = percQuebraTotal;
+
+        // Muda a cor da porcentagem de quebra (Vermelho se > 5%, Verde se < 5% - Exemplo)
+        const elQuebra = document.getElementById('kpiPercQuebraTotal').parentElement;
+        if(parseFloat(percQuebraTotal) > 5) elQuebra.style.color = 'var(--danger)';
+        else elQuebra.style.color = 'var(--success)';
+        
+        // --- GRÁFICO DE PIZZA (TURNOS) ---
         if (pieChart) pieChart.destroy();
         const turnos = {};
         dados.forEach(d => { turnos[d.turno] = (turnos[d.turno]||0) + (d.realizada||0); });
@@ -520,11 +544,104 @@ window.atualizarDashboard = async function(){
         const ctxP = document.getElementById('pieChartTurno').getContext('2d');
         pieChart = new Chart(ctxP, {
             type: 'pie',
-            data: { labels: Object.keys(turnos), datasets: [{ data: Object.values(turnos), backgroundColor: ['#36A2EB','#FFCE56','#FF6384','#4BC0C0','#9966FF','#FF9F40'] }] },
-            options: { plugins: { datalabels: { color: '#fff' } } }
+            data: { 
+                labels: Object.keys(turnos), 
+                datasets: [{ 
+                    data: Object.values(turnos), 
+                    backgroundColor: ['#0077cc','#28a745','#ff9900','#dc3545','#6c757d','#17a2b8'] 
+                }] 
+            },
+            options: { 
+                plugins: { 
+                    datalabels: { 
+                        color: '#fff',
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value*100 / sum).toFixed(1) + "%";
+                            return percentage;
+                        }
+                    },
+                    legend: { position: 'bottom' }
+                } 
+            }
         });
 
-        // (O gráfico de barras mensal exigiria outra query de 12 meses, omitido para brevidade, mas segue lógica similar)
+        // 2. CHAMA O GRÁFICO MENSAL (SEPARADO)
+        await renderizarGraficoMensal(filtro);
 
-    } catch(e){ console.error(e); }
+    } catch(e){ console.error("Erro Dashboard:", e); }
+}
+
+// =========================================================
+// NOVA FUNÇÃO: GRÁFICO MENSAL (ACUMULADO 12 MESES)
+// =========================================================
+async function renderizarGraficoMensal(filtroAtualDash) {
+    // Calcula data de 1 ano atrás
+    const hoje = new Date();
+    const anoPassado = new Date();
+    anoPassado.setFullYear(hoje.getFullYear() - 1);
+    const dataInicioStr = anoPassado.toISOString().split('T')[0];
+
+    // Busca dados do último ano (independente do filtro de data do dashboard)
+    // Mas RESPEITA o filtro de SETOR e MÁQUINA
+    let q = query(producoesCol, where("data", ">=", dataInicioStr));
+    
+    try {
+        const snap = await getDocs(q);
+        const dados = snap.docs.map(d => d.data()).filter(d => 
+            (!filtroAtualDash.setor || d.setor === filtroAtualDash.setor) &&
+            (!filtroAtualDash.maquina || (d.maquina && d.maquina.toLowerCase().includes(filtroAtualDash.maquina)))
+        );
+
+        // Agrupa por Mês/Ano (Ex: "11/2025")
+        const agrupado = {};
+        // Cria as chaves para os últimos 12 meses (para garantir ordem cronológica)
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            const mesAno = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }); // ex: nov./25
+            agrupado[mesAno] = 0;
+        }
+
+        // Preenche com os dados reais
+        dados.forEach(d => {
+            // Converte "2025-11-25" para objeto Date corretamente (timezone fix)
+            const parts = d.data.split('-');
+            const dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            const chave = dataObj.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+            
+            if (agrupado[chave] !== undefined) {
+                agrupado[chave] += (d.realizada || 0);
+            }
+        });
+
+        // Renderiza Gráfico
+        if (barChart) barChart.destroy();
+        const ctxB = document.getElementById('barChartMensal').getContext('2d');
+        
+        barChart = new Chart(ctxB, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(agrupado),
+                datasets: [{
+                    label: 'Produção Realizada',
+                    data: Object.values(agrupado),
+                    backgroundColor: '#0077cc',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } },
+                plugins: {
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#555',
+                        formatter: (value) => value > 0 ? (value/1000).toFixed(0) + 'k' : ''
+                    },
+                    legend: { display: false }
+                }
+            }
+        });
+
+    } catch (e) { console.error("Erro Gráfico Mensal:", e); }
 }
