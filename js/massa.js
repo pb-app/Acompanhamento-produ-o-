@@ -192,7 +192,7 @@ async function salvarProducaoMassa(event) {
         const eficPalete = (kgPaleteReal / metaPalete) * 100;
 
         // 2. Se ALGUMA das duas for menor que 90%, dispara o alerta
-        if (eficFT < 90 || eficPalete < 90) {
+        if (eficFT < 66 || eficPalete < 70) {
             // Chama a função que criamos lá no final do arquivo
             enviarAlertaMassa(
                 document.getElementById('turno').value,
@@ -593,7 +593,7 @@ async function enviarAlertaMassa(turno, eficFT, eficPalete, observacao) {
                      `📉 *Efic. Filtro:* ${eficFT}%\n` +
                      `📉 *Efic. Palete:* ${eficPalete}%\n` +
                      `📝 *Obs:* ${observacao || "Sem observação"}\n\n` +
-                     `Verifique o processo.`;
+                     `VERIFIQUE COM O TURNO.`;
 
     const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
