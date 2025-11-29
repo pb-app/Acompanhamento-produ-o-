@@ -771,39 +771,40 @@ window.addEventListener('appinstalled', () => {
 });
 
 // =========================================================
-// FUNÇÃO DE NOTIFICAÇÃO (API LEGACY)
+// FUNÇÃO DE NOTIFICAÇÃO VIA TELEGRAM (PLANO B)
 // =========================================================
 async function enviarAlertaBaixaProducao(setor, turno, eficiencia) {
-    // COLE SUA CHAVE DO SERVIDOR AQUI DENTRO DAS ASPAS:
-    const SERVER_KEY = "AIzaSyDMQXStsm9b1pKOQumNH0owHF4oleQbAb4"; 
+    // 1. COLE AQUI O TOKEN QUE O @BotFather TE DEU
+    const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
+    
+    // 2. COLE AQUI O SEU ID NÚMERICO
+    const CHAT_ID = "5651366136"; 
 
-    // Mensagem a ser enviada
-    const notificationData = {
-        "to": "/topics/supervisores", // Envia para quem assinou o tópico "supervisores"
-        "notification": {
-            "title": "⚠️ Alerta de Baixa Produção",
-            "body": `O setor ${setor} (Turno ${turno}) fechou com apenas ${eficiencia}% de eficiência.`,
-            "icon": "./icons/icon-180x180.png",
-            "click_action": "https://pb-app.github.io/producao2/"
-        }
-    };
+    const mensagem = `🚨 *ALERTA DE PRODUÇÃO* 🚨\n\n` +
+                     `📉 *Setor:* ${setor}\n` +
+                     `⏰ *Turno:* ${turno}\n` +
+                     `⚠️ *Eficiência:* ${eficiencia}%\n\n` +
+                     `Verifique o painel imediatamente.`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
     try {
-        const response = await fetch('https://fcm.googleapis.com/fcm/send', {
+        const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Authorization': 'key=' + SERVER_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(notificationData)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: mensagem,
+                parse_mode: "Markdown" // Deixa negrito e bonito
+            })
         });
 
         if (response.ok) {
-            console.log("Alerta enviado para o supervisor!");
+            console.log("✅ Alerta enviado para o Telegram!");
         } else {
-            console.error("Erro ao enviar alerta:", await response.text());
+            console.error("Erro Telegram:", await response.text());
         }
     } catch (error) {
-        console.error("Falha na conexão de notificação:", error);
+        console.error("Falha na conexão Telegram:", error);
     }
 }
