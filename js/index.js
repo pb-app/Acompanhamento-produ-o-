@@ -179,7 +179,7 @@ async function salvarLancamentoProducao(e) {
 
         // 2. Se for menor que 90%, dispara o alerta
         // (Usamos toFixed(0) para arredondar, ex: 79)
-        if (data.prevista > 0 && eficiencia < 90 {
+        if (data.prevista > 0 && eficiencia < 90) {
             // Não usamos 'await' aqui para não travar o operador. O alerta vai em segundo plano.
             enviarAlertaBaixaProducao(data.setor, data.turno, eficiencia.toFixed(1));
         }
