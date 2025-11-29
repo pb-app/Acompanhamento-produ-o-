@@ -180,8 +180,14 @@ async function salvarLancamentoProducao(e) {
         // 2. Se for menor que 90%, dispara o alerta
         // (Usamos toFixed(0) para arredondar, ex: 79)
         if (data.prevista > 0 && eficiencia < 90) {
-            // Não usamos 'await' aqui para não travar o operador. O alerta vai em segundo plano.
-            enviarAlertaBaixaProducao(data.setor, data.turno, eficiencia.toFixed(1));
+            
+            // ATENÇÃO AQUI: Adicionamos data.operador e data.maquina no final
+            enviarAlertaBaixaProducao(
+                data.setor, 
+                data.turno, 
+                eficiencia.toFixed(1), 
+                data.operador, 
+                data.maquina);
         }
         // -----------------------------
 
@@ -771,20 +777,20 @@ window.addEventListener('appinstalled', () => {
 });
 
 // =========================================================
-// FUNÇÃO DE NOTIFICAÇÃO VIA TELEGRAM (PLANO B)
+// FUNÇÃO DE NOTIFICAÇÃO VIA TELEGRAM (ATUALIZADA)
 // =========================================================
-async function enviarAlertaBaixaProducao(setor, turno, eficiencia) {
-    // 1. COLE AQUI O TOKEN QUE O @BotFather TE DEU
+async function enviarAlertaBaixaProducao(setor, turno, eficiencia, operador, maquina) {
+    // SEUS DADOS (Mantenha os que você já tem funcionando)
     const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
-    
-    // 2. COLE AQUI O SEU ID NÚMERICO
     const CHAT_ID = "5651366136"; 
 
     const mensagem = `🚨 *ALERTA DE PRODUÇÃO* 🚨\n\n` +
                      `📉 *Setor:* ${setor}\n` +
+                     `⚙️ *Máquina:* ${maquina}\n` +  // <--- NOVA LINHA
+                     `👷 *Operador:* ${operador}\n` + // <--- NOVA LINHA
                      `⏰ *Turno:* ${turno}\n` +
                      `⚠️ *Eficiência:* ${eficiencia}%\n\n` +
-                     `Verifique com o Operador o motivo.`;
+                     `Verifique o painel imediatamente.`;
 
     const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
@@ -795,15 +801,13 @@ async function enviarAlertaBaixaProducao(setor, turno, eficiencia) {
             body: JSON.stringify({
                 chat_id: CHAT_ID,
                 text: mensagem,
-                parse_mode: "Markdown" // Deixa negrito e bonito
+                parse_mode: "Markdown"
             })
         });
 
-        if (response.ok) {
-            console.log("✅ Alerta enviado para o Telegram!");
-        } else {
-            console.error("Erro Telegram:", await response.text());
-        }
+        if (response.ok) console.log("✅ Alerta detalhado enviado!");
+        else console.error("Erro Telegram:", await response.text());
+        
     } catch (error) {
         console.error("Falha na conexão Telegram:", error);
     }
