@@ -182,6 +182,27 @@ async function salvarProducaoMassa(event) {
 
     try {
         await addDoc(massaCol, novoRegistro);
+
+        // --- LÓGICA DE ALERTA (MASSA) ---
+        // 1. Calcula as eficiências para o alerta
+        const metaFT = appConfig.metaKgFT || 1;
+        const metaPalete = appConfig.metaKgPalete || 1;
+        
+        const eficFT = (kgCalculado / metaFT) * 100;
+        const eficPalete = (kgPaleteReal / metaPalete) * 100;
+
+        // 2. Se ALGUMA das duas for menor que 90%, dispara o alerta
+        if (eficFT < 90 || eficPalete < 90) {
+            // Chama a função que criamos lá no final do arquivo
+            enviarAlertaMassa(
+                document.getElementById('turno').value,
+                eficFT.toFixed(1),
+                eficPalete.toFixed(1),
+                document.getElementById('observacao').value
+            );
+        }
+        // ---------------------------------
+
         alert('Produção lançada! ✅');
         renderizarHistorico();
         window.limparFormMassa();
@@ -193,7 +214,6 @@ async function salvarProducaoMassa(event) {
         btnSalvar.disabled = false;
         btnSalvar.textContent = textoOriginal;
     }
-}
 async function renderizarHistorico() {
     const tbody = document.getElementById('tabelaHistoricoBody');
     tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
@@ -558,4 +578,37 @@ async function gerarGraficoProducaoMensal() {
             }
         });
     } catch (error) { console.error("Erro Gráfico Mensal:", error); }
+}
+// =========================================================
+// NOTIFICAÇÃO TELEGRAM - FÁBRICA DE MASSA
+// =========================================================
+async function enviarAlertaMassa(turno, eficFT, eficPalete, observacao) {
+    // SEUS DADOS
+    const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
+    const CHAT_ID = "5651366136"; 
+
+    // Mensagem personalizada para Massa
+    const mensagem = `🚨 *ALERTA FÁBRICA DE MASSA* 🚨\n\n` +
+                     `⏰ *Turno:* ${turno}\n` +
+                     `📉 *Efic. Filtro:* ${eficFT}%\n` +
+                     `📉 *Efic. Palete:* ${eficPalete}%\n` +
+                     `📝 *Obs:* ${observacao || "Sem observação"}\n\n` +
+                     `Verifique o processo.`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: mensagem,
+                parse_mode: "Markdown"
+            })
+        });
+        console.log("✅ Alerta de Massa enviado!");
+    } catch (error) {
+        console.error("Erro Telegram:", error);
+    }
 }
