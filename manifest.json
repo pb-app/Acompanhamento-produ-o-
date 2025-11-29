@@ -20,8 +20,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "https://pb-app.github.io/producao2/index.html#",
-  "scope": "https://pb-app.github.io/producao2/index.html",
+  "start_url": "https://pb-app.github.io/Acompanhamento-produ-o-/#",
+  "scope": "https://pb-app.github.io/Acompanhamento-produ-o-/",
   "display": "standalone",
   "background_color": "#e6f0ff",
   "theme_color": "#0077cc"
