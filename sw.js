@@ -1,5 +1,5 @@
 // MUDANÇA 1: Alteramos para v2 para forçar atualização
-const CACHE_NAME = 'producao-app-v8.0';
+const CACHE_NAME = 'producao-app-v9.0';
 
 const ASSETS_TO_CACHE = [
   './',
