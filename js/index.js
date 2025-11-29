@@ -169,8 +169,26 @@ async function salvarLancamentoProducao(e) {
 
     try {
         await addDoc(producoesCol, data);
+        
+        // --- LÓGICA NOVA DE ALERTA ---
+        // 1. Calcula a eficiência
+        let eficiencia = 0;
+        if (data.prevista > 0) {
+            eficiencia = (data.realizada / data.prevista) * 100;
+        }
+
+        // 2. Se for menor que 90%, dispara o alerta
+        // (Usamos toFixed(0) para arredondar, ex: 79)
+        if (data.prevista > 0 && eficiencia < 90 {
+            // Não usamos 'await' aqui para não travar o operador. O alerta vai em segundo plano.
+            enviarAlertaBaixaProducao(data.setor, data.turno, eficiencia.toFixed(1));
+        }
+        // -----------------------------
+
         alert("Lançamento salvo com sucesso no Firebase! ✅");
         window.limparFormulario();
+        
+    // ... resto do código ...
     } catch (error) {
         console.error("Erro ao adicionar documento: ", error);
         alert("Erro ao salvar o lançamento. Verifique o console. ❌"); 
@@ -751,3 +769,42 @@ window.addEventListener('appinstalled', () => {
     localStorage.setItem('dispensouInstalacao', 'instalado');
     console.log('App instalado com sucesso!');
 });
+
+// =========================================================
+// FUNÇÃO DE NOTIFICAÇÃO VIA TELEGRAM (PLANO B)
+// =========================================================
+async function enviarAlertaBaixaProducao(setor, turno, eficiencia) {
+    // 1. COLE AQUI O TOKEN QUE O @BotFather TE DEU
+    const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
+    
+    // 2. COLE AQUI O SEU ID NÚMERICO
+    const CHAT_ID = "5651366136"; 
+
+    const mensagem = `🚨 *ALERTA DE PRODUÇÃO* 🚨\n\n` +
+                     `📉 *Setor:* ${setor}\n` +
+                     `⏰ *Turno:* ${turno}\n` +
+                     `⚠️ *Eficiência:* ${eficiencia}%\n\n` +
+                     `Verifique o painel imediatamente.`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: mensagem,
+                parse_mode: "Markdown" // Deixa negrito e bonito
+            })
+        });
+
+        if (response.ok) {
+            console.log("✅ Alerta enviado para o Telegram!");
+        } else {
+            console.error("Erro Telegram:", await response.text());
+        }
+    } catch (error) {
+        console.error("Falha na conexão Telegram:", error);
+    }
+}
