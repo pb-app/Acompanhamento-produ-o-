@@ -169,8 +169,26 @@ async function salvarLancamentoProducao(e) {
 
     try {
         await addDoc(producoesCol, data);
+        
+        // --- LÓGICA NOVA DE ALERTA ---
+        // 1. Calcula a eficiência
+        let eficiencia = 0;
+        if (data.prevista > 0) {
+            eficiencia = (data.realizada / data.prevista) * 100;
+        }
+
+        // 2. Se for menor que 80%, dispara o alerta
+        // (Usamos toFixed(0) para arredondar, ex: 79)
+        if (data.prevista > 0 && eficiencia < 80) {
+            // Não usamos 'await' aqui para não travar o operador. O alerta vai em segundo plano.
+            enviarAlertaBaixaProducao(data.setor, data.turno, eficiencia.toFixed(1));
+        }
+        // -----------------------------
+
         alert("Lançamento salvo com sucesso no Firebase! ✅");
         window.limparFormulario();
+    } 
+    // ... resto do código ...
     } catch (error) {
         console.error("Erro ao adicionar documento: ", error);
         alert("Erro ao salvar o lançamento. Verifique o console. ❌"); 
