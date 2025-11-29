@@ -144,47 +144,48 @@ th { color: var(--text-light); font-weight: 700; text-transform: uppercase; font
 }
 
 /* ================================================================ */
-/* =========== TABELA MOBILE INTELIGENTE (Solução A) ============== */
+/* =========== TABELA MOBILE INTELIGENTE (OPÇÃO A) ================ */
 /* ================================================================ */
 
 @media (max-width: 600px) {
-    /* 1. Fonte bem pequena para caber tudo */
+    /* 1. Fonte reduzida e pouco espaçamento para caber tudo */
     th, td {
-        font-size: 0.65rem !important; /* Letra reduzida */
+        font-size: 0.65rem !important; /* Letra pequena (aprox 10-11px) */
         padding: 0.5rem 0.1rem !important; /* Mínimo de espaço lateral */
         vertical-align: middle; /* Centraliza verticalmente */
     }
 
-    /* 2. Define larguras fixas para forçar o encaixe */
+    /* 2. Força a tabela a respeitar larguras fixas */
     table { table-layout: fixed; width: 100%; }
     
-    /* Coluna 1: Botão (+) */
+    /* Coluna 1: Botão (+) - Bem estreita */
     th:nth-child(1), td:nth-child(1) { width: 25px; } 
     
-    /* Coluna 2: Data (Quebra linha se precisar) */
-    th:nth-child(2), td:nth-child(2) { width: 50px; word-wrap: break-word; }
+    /* Coluna 2: Data - Quebra linha se precisar (ex: 2025 \n 11-28) */
+    th:nth-child(2), td:nth-child(2) { width: 45px; word-wrap: break-word; }
 
-    /* Coluna 3: SETOR (Mantido, mas cortado se for longo) */
+    /* Coluna 3: SETOR (Importante: Mantido, mas abrevia com "...") */
     th:nth-child(3), td:nth-child(3) { 
-        display: table-cell; /* Garante que aparece */
+        display: table-cell; 
         width: 60px; 
         white-space: nowrap; 
         overflow: hidden; 
-        text-overflow: ellipsis; /* Coloca "..." se não couber */
+        text-overflow: ellipsis; /* Transforma "Conformação" em "Conform..." */
     }
 
-    /* Coluna 4: MÁQUINA (Cortada se for longa) */
+    /* Coluna 4: MÁQUINA (Abrevia com "...") */
     th:nth-child(4), td:nth-child(4) { 
+        display: table-cell;
         width: 60px;
         white-space: nowrap; 
         overflow: hidden; 
-        text-overflow: ellipsis; /* Coloca "..." ex: "Máquina..." */
+        text-overflow: ellipsis; 
     }
 
-    /* Colunas 5 e 6: KPIs (Prioridade total) */
+    /* Colunas 5 e 6: KPIs (Eficiência e Perda) - Prioridade visual */
     th:nth-child(5), td:nth-child(5),
     th:nth-child(6), td:nth-child(6) { 
-        width: 45px; 
+        width: 40px; 
         text-align: center;
         font-weight: bold;
     }
