@@ -447,9 +447,12 @@ async function salvarEdicaoOperador(e) {
     catch(e){ console.error(e); alert("Erro ao salvar."); }
 }
 
-// --- EXPORTAÇÃO EXCEL ---
+// =========================================================
+// CORREÇÃO: EXPORTAR EXCEL (DATA COMO DATA, NÃO TEXTO)
+// =========================================================
 window.exportarExcel = async function() {
-    alert("Exportando...");
+    alert("Preparando dados para exportação...");
+    
     const filtro = {
         dataInicio: document.getElementById("filtroDataInicio").value,
         dataFim: document.getElementById("filtroDataFim").value,
@@ -458,8 +461,10 @@ window.exportarExcel = async function() {
         maquina: document.getElementById("filtroMaquina").value,
         refCpb: document.getElementById("filtroRefCpb").value
     };
+
     let q = query(producoesCol, orderBy("data", "desc"));
-    // Simples filtro para exportação (pode melhorar com where se tiver índices)
+    
+    // Filtros de Data no Banco de Dados
     if(filtro.dataInicio) q = query(q, where("data", ">=", filtro.dataInicio));
     if(filtro.dataFim) q = query(q, where("data", "<=", filtro.dataFim));
 
@@ -471,19 +476,43 @@ window.exportarExcel = async function() {
             (!filtro.maquina || (r.maquina && r.maquina.toLowerCase().includes(filtro.maquina.toLowerCase())))
         );
         
-        if (filtrados.length === 0) return alert("Nada encontrado.");
+        if (filtrados.length === 0) return alert("Nenhum dado encontrado para exportar.");
 
-        const dataToExport = filtrados.map(r => ({
-            "Data": r.data,
-            "Setor": r.setor, "Turno": r.turno, "Operador": r.operador,
-            "Máquina": r.maquina, "Massa": r.massa, "Realizada": r.realizada, "Quebras": r.quebras
-        }));
+        const dataToExport = filtrados.map(r => {
+            // TRUQUE: Converter a string "2025-11-29" em um Objeto Data do JavaScript
+            // Isso faz o Excel entender que é uma data
+            let dataFormatada = r.data;
+            if (r.data && typeof r.data === 'string') {
+                const partes = r.data.split('-'); // Divide [2025, 11, 29]
+                // Cria data no fuso horário local (Ano, Mês-1, Dia)
+                dataFormatada = new Date(partes[0], partes[1] - 1, partes[2]);
+            }
+
+            return {
+                "Data": dataFormatada, // <--- Aqui está a mágica
+                "Setor": r.setor,
+                "Turno": r.turno,
+                "Operador": r.operador,
+                "Máquina": r.maquina,
+                "Massa": r.massa,
+                "Prevista": r.prevista,
+                "Realizada": r.realizada,
+                "Quebras": r.quebras,
+                "Obs": r.observacao
+            };
+        });
         
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Dados");
+        
+        // Gera o arquivo com a data de hoje no nome
         XLSX.writeFile(wb, `Producao_${obterDataLocalFormatada()}.xlsx`);
-    } catch(e){ console.error(e); alert("Erro na exportação."); }
+
+    } catch(e){ 
+        console.error(e); 
+        alert("Erro na exportação."); 
+    }
 }
 
 // =========================================================
