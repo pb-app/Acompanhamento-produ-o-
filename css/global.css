@@ -143,13 +143,49 @@ th { color: var(--text-light); font-weight: 700; text-transform: uppercase; font
     padding: 1rem 1.5rem;
 }
 
-/* Ajustes específicos para Celulares */
+/* ================================================================ */
+/* =========== TABELA MOBILE INTELIGENTE (Solução A) ============== */
+/* ================================================================ */
+
 @media (max-width: 600px) {
-    form {
-        gap: 0.6rem; /* Menos espaço entre os campos */
+    /* 1. Fonte bem pequena para caber tudo */
+    th, td {
+        font-size: 0.65rem !important; /* Letra reduzida */
+        padding: 0.5rem 0.1rem !important; /* Mínimo de espaço lateral */
+        vertical-align: middle; /* Centraliza verticalmente */
     }
-    input, select {
-        padding: 0.6rem; /* Inputs mais compactos */
-        font-size: 0.9rem; /* Letra um pouco menor */
+
+    /* 2. Define larguras fixas para forçar o encaixe */
+    table { table-layout: fixed; width: 100%; }
+    
+    /* Coluna 1: Botão (+) */
+    th:nth-child(1), td:nth-child(1) { width: 25px; } 
+    
+    /* Coluna 2: Data (Quebra linha se precisar) */
+    th:nth-child(2), td:nth-child(2) { width: 50px; word-wrap: break-word; }
+
+    /* Coluna 3: SETOR (Mantido, mas cortado se for longo) */
+    th:nth-child(3), td:nth-child(3) { 
+        display: table-cell; /* Garante que aparece */
+        width: 60px; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; /* Coloca "..." se não couber */
+    }
+
+    /* Coluna 4: MÁQUINA (Cortada se for longa) */
+    th:nth-child(4), td:nth-child(4) { 
+        width: 60px;
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; /* Coloca "..." ex: "Máquina..." */
+    }
+
+    /* Colunas 5 e 6: KPIs (Prioridade total) */
+    th:nth-child(5), td:nth-child(5),
+    th:nth-child(6), td:nth-child(6) { 
+        width: 45px; 
+        text-align: center;
+        font-weight: bold;
     }
 }
