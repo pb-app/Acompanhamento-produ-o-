@@ -331,12 +331,76 @@ window.deletarPesagem = async function(id) {
     }
 }
 
-// --- DASHBOARD E EXPORTAÇÃO ---
+// =========================================================
+// CORREÇÃO: EXPORTAR EXCEL FÁBRICA DE MASSA
+// =========================================================
 window.exportarExcel = async function() {
-    alert("Exportando...");
-    // ... (Lógica de exportação similar, adaptada para query massaCol) ...
-    // Para simplificar, use a mesma lógica do index.js mas apontando para massaCol
-    // Implemente aqui conforme a necessidade.
+    alert("Preparando exportação da Fábrica de Massa...");
+    
+    // 1. Pega os valores dos filtros da tela
+    const filtro = {
+        ini: document.getElementById('filtroDataInicio').value,
+        fim: document.getElementById('filtroDataFim').value,
+        turno: document.getElementById('filtroTurno').value
+    };
+
+    // 2. Prepara a busca no Banco de Dados
+    let constraints = [orderBy("data", "desc"), orderBy("timestamp", "desc")];
+    
+    if (filtro.ini) constraints.push(where("data", ">=", filtro.ini));
+    if (filtro.fim) constraints.push(where("data", "<=", filtro.fim));
+    if (filtro.turno) constraints.push(where("turno", "==", filtro.turno));
+
+    try {
+        const snap = await getDocs(query(massaCol, ...constraints));
+        
+        if (snap.empty) return alert("Nenhum dado encontrado para exportar.");
+
+        // 3. Formata os dados para o Excel
+        const dataToExport = snap.docs.map(doc => {
+            const r = doc.data();
+            
+            // Correção da DATA para o Excel agrupar certo
+            let dataFormatada = r.data;
+            if (r.data && typeof r.data === 'string') {
+                const partes = r.data.split('-'); 
+                dataFormatada = new Date(partes[0], partes[1] - 1, partes[2]);
+            }
+
+            // Cálculos de Eficiência para sair no Excel
+            const metaFT = r.metaKgFT || appConfig.metaKgFT;
+            const metaPalete = r.metaKgPalete || appConfig.metaKgPalete;
+            
+            // Evita divisão por zero
+            const eficFT = metaFT > 0 ? (r.kgCalculado / metaFT) * 100 : 0;
+            const eficPalete = metaPalete > 0 ? (r.kgPalete / metaPalete) * 100 : 0;
+
+            return {
+                "Data": dataFormatada,
+                "Turno": r.turno,
+                "Qtd Filtros (FT)": r.qtdFT,
+                "Qtd Placas": r.qtdPlacas,
+                "KG Filtro (Teórico)": r.kgCalculado.toFixed(2),
+                "KG Palete (Real)": r.kgPalete.toFixed(2),
+                "Retrabalho (kg)": r.retrabalhoKg ? r.retrabalhoKg.toFixed(2) : "0.00",
+                "% Efic. FT": eficFT.toFixed(2) + "%",
+                "% Efic. Palete": eficPalete.toFixed(2) + "%",
+                "Meta FT Utilizada": metaFT,
+                "Observação": r.observacao || ""
+            };
+        });
+        
+        // 4. Gera o arquivo
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Producao_Massa");
+        
+        XLSX.writeFile(wb, `Massa_${obterDataLocalFormatada()}.xlsx`);
+
+    } catch(e) { 
+        console.error("Erro Excel Massa:", e); 
+        alert("Erro ao exportar. Verifique o console."); 
+    }
 }
 
 // =========================================================
