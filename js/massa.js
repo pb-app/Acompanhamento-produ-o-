@@ -214,6 +214,7 @@ async function salvarProducaoMassa(event) {
         btnSalvar.disabled = false;
         btnSalvar.textContent = textoOriginal;
     }
+}
 async function renderizarHistorico() {
     const tbody = document.getElementById('tabelaHistoricoBody');
     tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
