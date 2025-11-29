@@ -187,7 +187,7 @@ async function salvarLancamentoProducao(e) {
 
         alert("Lançamento salvo com sucesso no Firebase! ✅");
         window.limparFormulario();
-    } 
+        
     // ... resto do código ...
     } catch (error) {
         console.error("Erro ao adicionar documento: ", error);
