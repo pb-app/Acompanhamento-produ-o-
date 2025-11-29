@@ -784,7 +784,7 @@ async function enviarAlertaBaixaProducao(setor, turno, eficiencia) {
                      `📉 *Setor:* ${setor}\n` +
                      `⏰ *Turno:* ${turno}\n` +
                      `⚠️ *Eficiência:* ${eficiencia}%\n\n` +
-                     `Verifique o painel imediatamente.`;
+                     `Verifique com o Operador o motivo.`;
 
     const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
