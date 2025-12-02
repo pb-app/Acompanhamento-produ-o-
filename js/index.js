@@ -782,7 +782,7 @@ window.addEventListener('appinstalled', () => {
 async function enviarAlertaBaixaProducao(setor, turno, eficiencia, operador, maquina) {
     // SEUS DADOS (Mantenha os que você já tem funcionando)
     const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
-    const CHAT_ID = "5651366136"; 
+    const CHAT_ID = "-5090707282"; 
 
     const mensagem = `🚨 *ALERTA DE PRODUÇÃO* 🚨\n\n` +
                      `📉 *Setor:* ${setor}\n` +
