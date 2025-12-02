@@ -586,7 +586,7 @@ async function gerarGraficoProducaoMensal() {
 async function enviarAlertaMassa(turno, eficFT, eficPalete, observacao) {
     // SEUS DADOS
     const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
-    const CHAT_ID = "5651366136"; 
+    const CHAT_ID = "-5090707282"; 
 
     // Mensagem personalizada para Massa
     const mensagem = `🚨 *ALERTA FÁBRICA DE MASSA* 🚨\n\n` +
