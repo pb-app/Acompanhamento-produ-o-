@@ -27,10 +27,9 @@
         <button id="openConfigBtn" title="Configurações de Pesos e Metas">⚙️</button>
         
         <div class="tab-nav">
-            <button class="tab-link" onclick="window.showTab('producao')">Filtro Prensa</button>
-            <button class="tab-link" onclick="window.showTab('moagem')">Moagem</button>
-            <button class="tab-link" onclick="window.showTab('operadores')">Operadores</button>
-            <button class="tab-link" onclick="window.showTab('dashboard')">Dashboard</button>
+            <button class="tab-link active" onclick="showTab('producao')">Lançamentos</button>
+            <button class="tab-link" onclick="showTab('pesagem')">Pesagem</button>
+            <button class="tab-link" onclick="showTab('dashboard')">Dashboard</button>
         </div>
 
         <div id="tabProducao" class="tab-content active">
@@ -170,79 +169,6 @@
         </div>
     </div>
 
-    <div id="tabMoagem" class="tab-content">
-        <section>
-            <h2>Lançar Moagem</h2>
-            <form id="formMoagem">
-                <div><label>Data</label><input type="date" id="dataMoagem" required></div>
-                <div><label>Turno</label>
-                    <select id="turnoMoagem" required>
-                        <option value="">Selecione...</option>
-                        <option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
-                        <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option>
-                    </select>
-                </div>
-                <div><label>Operador</label>
-                    <select id="operadorMoagemSelect" required><option>Carregando...</option></select>
-                </div>
-
-                <div style="border:1px solid #ccc; padding:10px; border-radius:5px; margin-bottom:10px;">
-                    <h3>Produção</h3>
-                    <div><label>Qtd Cargas</label><input type="number" id="qtdCargasMoagem" min="0" placeholder="Quantas cargas?" required></div>
-                    <div id="cargasContainerMoagem" style="margin-top:10px;"></div>
-                </div>
-
-                <div style="border:1px solid #ccc; padding:10px; border-radius:5px; margin-bottom:10px;">
-                    <h3>Pontuação Extra</h3>
-                    <label>Qtd Descargas: <input type="number" id="qtdDescargaMoagem" value="0"></label>
-                    <br><label>Arrumou Box? <select id="arrumouBoxMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></label>
-                    <br><label>Carregou Caco? <select id="carregouCaminhaoCacoMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></label>
-                    <br><label>Lavou Peneira? <select id="lavouPeneiraMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></label>
-                </div>
-
-                <div><label>Obs</label><textarea id="observacaoMoagem"></textarea></div>
-                <div class="form-actions"><button type="submit">Salvar Moagem</button></div>
-            </form>
-        </section>
-
-        <section class="history-section">
-            <h2>Histórico Moagem</h2>
-            <div style="overflow-x:auto;">
-                <table style="width:100%; text-align:left; border-collapse:collapse;">
-                    <thead><tr><th>Data</th><th>Turno</th><th>Operador</th><th>Cargas</th><th>Peso Total</th><th>Pontos</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaHistoricoMoagem"></tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <div id="tabOperadores" class="tab-content">
-        <section>
-            <h2>Cadastrar Operador</h2>
-            <form id="formOperador">
-                <div><label>Data Cadastro</label><input type="date" id="dataCadastroOperador" required></div>
-                <div><label>Nome</label><input type="text" id="nomeOperador" required></div>
-                <div><label>Turno</label>
-                    <select id="turnoOperador" required>
-                        <option value="">Selecione...</option>
-                        <option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
-                        <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option>
-                    </select>
-                </div>
-                <div class="form-actions"><button type="submit">Cadastrar</button></div>
-            </form>
-        </section>
-
-        <section class="history-section">
-            <h2>Equipe Cadastrada</h2>
-            <table style="width:100%; text-align:left;">
-                <thead><tr><th>Nome</th><th>Turno</th><th>Ações</th></tr></thead>
-                <tbody id="tabelaOperadoresBody"></tbody>
-            </table>
-        </section>
-    </div>
-
     <script type="module" src="js/massa.js"></script>
 </body>
 </html>
-
