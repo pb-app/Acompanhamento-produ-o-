@@ -1,265 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Lançamento - Fábrica de Massa</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    
+
     <link rel="stylesheet" href="css/global.css">
-
-    <style>
-        /* ESTILOS ESPECÍFICOS DA PÁGINA DE MASSA */
-        /* (Incorporei as melhorias visuais do código novo aqui) */
-        
-        /* Ajustes de Tabela estilo Planilha */
-        .history-section table th { background-color: var(--primary, #007bff); color: white; }
-        .history-section table td { border: 1px solid #dee2e6; }
-        .history-section tbody tr:nth-child(even) { background-color: #f8f9fa; }
-        
-        /* Botões de Ação Pequenos */
-        .edit-btn, .delete-btn { padding: 0.3rem 0.8rem; font-size: 0.75rem; margin-right: 5px; }
-        .delete-btn { background-color: #dc3545; color: white; border: none; border-radius: 4px; }
-        .edit-btn { background-color: #ffc107; color: black; border: none; border-radius: 4px; }
-
-        /* Botão Expandir */
-        .expand-btn { background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: transform 0.2s; }
-        .expand-btn svg { width: 16px; height: 16px; color: #6c757d; }
-        .expand-btn.open { transform: rotate(90deg); }
-        .linha-detalhes { display: none; background-color: #f1f3f5; }
-        
-        /* Grids e Layouts */
-        .moagem-fieldset {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;
-            border: 1px solid #dee2e6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;
-        }
-        .campo-condicional { display: none; margin-top: 0.5rem; }
-        
-        /* Tabs */
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; flex-wrap: wrap; }
-        .tab-link { background: none; border: none; padding: 10px 15px; cursor: pointer; font-size: 1rem; color: #6c757d; border-bottom: 3px solid transparent; }
-        .tab-link.active { color: #007bff; border-bottom-color: #007bff; font-weight: bold; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* Modals */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
-    </style>
+    <link rel="stylesheet" href="css/massa.css">
 </head>
 <body>
-    <header>
-        <h1>Fábrica de Massa</h1>
-    </header>
+    <header><h1>Fábrica de Massa - Lançamento</h1></header>
 
-    <div class="nav-container" style="padding: 1rem;">
-        <a href="index.html" class="back-link" style="text-decoration: none; color: white; background: #28a745; padding: 8px 12px; border-radius: 5px;">❮ Voltar</a>
+    <div class="nav-container">
+        <a href="index.html" class="back-link">❮ Voltar para Produção Cerâmica</a>
     </div>
 
     <div class="container">
-        <button id="openConfigBtn" title="Configurações (Filtro Prensa)" onclick="window.openConfigModal()" style="float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer;">⚙️</button>
+        <button id="openConfigBtn" title="Configurações de Pesos e Metas">⚙️</button>
         
         <div class="tab-nav">
-            <button class="tab-link active" onclick="window.showTab('producao')">Filtro Prensa</button>
-            <button class="tab-link" onclick="window.showTab('moagem')">Moagem</button>
-            <button class="tab-link" onclick="window.showTab('pesagem')">Pesagem</button>
-            <button class="tab-link" onclick="window.showTab('operadores')">Operadores</button>
-            <button class="tab-link" onclick="window.showTab('dashboard')">Dashboard</button>
+            <button class="tab-link active" onclick="showTab('producao')">Lançamentos</button>
+            <button class="tab-link" onclick="showTab('pesagem')">Pesagem</button>
+            <button class="tab-link" onclick="showTab('dashboard')">Dashboard</button>
         </div>
 
         <div id="tabProducao" class="tab-content active">
             <section>
-                <h2>Lançamento (Filtro Prensa)</h2>
+                <h2>Lançar Produção</h2>
                 <form id="formMassa">
-                    <div><label>Data</label><input type="date" id="data" required></div>
-                    <div><label>Turno</label>
-                        <select id="turno" required>
-                            <option value="">Selecione...</option>
-                            <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option>
-                        </select>
+                    <div> <label for="data">Data</label> <input type="date" id="data" required> </div>
+                    <div> <label for="turno">Turno</label> 
+                        <select id="turno" required> 
+                            <option value="">Selecione um turno</option> 
+                            <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
+                        </select> 
                     </div>
-                    <div><label>Qtd FT</label><input type="number" id="qtdFT" required></div>
-                    <div><label>Qtd Placas</label><input type="number" id="qtdPlacas" required></div>
+                    <div> <label for="qtdFT">Quantidade Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
+                    <div> <label for="qtdPlacas">Quantidade de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
                     
                     <fieldset class="paletes-fieldset">
-                        <legend>Paletes</legend>
-                        <div class="palete-entry-row"><select id="paleteSelect_1" class="palete-select"></select><input type="number" id="paleteQtd_1" class="palete-qtd" placeholder="Qtd"><output id="paletePesoTotal_1">0.00</output> kg</div>
-                        <div class="palete-entry-row"><select id="paleteSelect_2" class="palete-select"></select><input type="number" id="paleteQtd_2" class="palete-qtd" placeholder="Qtd"><output id="paletePesoTotal_2">0.00</output> kg</div>
-                        <div class="palete-entry-row"><select id="paleteSelect_3" class="palete-select"></select><input type="number" id="paleteQtd_3" class="palete-qtd" placeholder="Qtd"><output id="paletePesoTotal_3">0.00</output> kg</div>
+                        <legend>Lançamento de Paletes</legend>
+                        <div class="palete-entry-row">
+                            <select id="paleteSelect_1" class="palete-select"></select>
+                            <input type="number" id="paleteQtd_1" class="palete-qtd" min="0" value="0" placeholder="Qtd.">
+                            <div class="palete-peso-total">Peso: <output id="paletePesoTotal_1">0.00</output> kg</div>
+                        </div>
+                        <div class="palete-entry-row">
+                            <select id="paleteSelect_2" class="palete-select"></select>
+                            <input type="number" id="paleteQtd_2" class="palete-qtd" min="0" value="0" placeholder="Qtd.">
+                            <div class="palete-peso-total">Peso: <output id="paletePesoTotal_2">0.00</output> kg</div>
+                        </div>
+                        <div class="palete-entry-row">
+                             <select id="paleteSelect_3" class="palete-select"></select>
+                            <input type="number" id="paleteQtd_3" class="palete-qtd" min="0" value="0" placeholder="Qtd.">
+                             <div class="palete-peso-total">Peso: <output id="paletePesoTotal_3">0.00</output> kg</div>
+                        </div>
                     </fieldset>
                     
-                    <div class="full-width"><label>Total Paletes (kg)</label><input type="number" id="kgPalete" readonly></div>
-                    <div class="full-width"><label>Obs</label><textarea id="observacao"></textarea></div>
-                    <div class="form-actions"><button type="submit">Lançar</button></div>
+                    <div class="full-width">
+                        <label for="kgPalete">KG Total de Paletes (Calculado)</label>
+                        <input type="number" id="kgPalete" step="0.1" min="0" readonly required>
+                    </div>
+
+                    <div class="full-width"> <label for="observacao">Observação</label> <textarea id="observacao" placeholder="Alguma observação..."></textarea> </div>
+                    <div class="form-actions"> <button type="button" class="secondary" onclick="limparFormMassa()">Limpar</button> <button type="submit">Lançar Produção</button> </div>
                 </form>
             </section>
+            
             <section class="history-section">
-                <h2>Histórico</h2>
+                <h2>Histórico de Produção</h2>
                 <div class="filters">
-                    <input type="date" id="filtroDataInicio"> <input type="date" id="filtroDataFim">
-                    <select id="filtroTurno"><option value="">Todos Turnos</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option></select>
-                    <button class="excel-btn" onclick="window.exportarExcel()">Exportar Excel</button>
+                    <div> <label>Data Início</label> <input type="date" id="filtroDataInicio"> </div> 
+                    <div> <label>Data Fim</label> <input type="date" id="filtroDataFim"> </div> 
+                    <div> <label>Turno</label> 
+                        <select id="filtroTurno"> 
+                            <option value="">Todos os Turnos</option> 
+                            <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
+                        </select> 
+                    </div>
+                    <button class="excel-btn" onclick="exportarExcel()">Exportar Excel</button>
                 </div>
                 <table>
-                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>% FT</th><th>% Palete</th><th>Retrabalho</th></tr></thead>
+                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>% FT</th><th>% Palete</th><th>Retrabalho (kg)</th></tr></thead>
                     <tbody id="tabelaHistoricoBody"></tbody>
-                </table>
-            </section>
-        </div>
-
-        <div id="tabMoagem" class="tab-content">
-            <section>
-                <h2>Lançar Moagem <button onclick="window.openConfigMoagemModal()" style="background:none; border:none; cursor:pointer;">⚙️</button></h2>
-                <form id="formMoagem">
-                    <div><label>Data</label><input type="date" id="dataMoagem" required></div>
-                    <div><label>Turno</label>
-                        <select id="turnoMoagem" required>
-                            <option value="">Selecione...</option>
-                            <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option>
-                        </select>
-                    </div>
-                    <div><label>Operador</label><select id="operadorMoagemSelect" required><option>Carregando...</option></select></div>
-
-                    <fieldset class="moagem-fieldset">
-                        <legend>Dados de Produção</legend>
-                        <div><label>Qtd Cargas</label><input type="number" id="qtdCargasMoagem" min="0" required></div>
-                        <div id="cargasContainerMoagem" class="full-width"></div>
-                    </fieldset>
-
-                    <fieldset class="moagem-fieldset">
-                        <legend>Atividades Operador</legend>
-                        <div><label>Qtd Descargas</label><input type="number" id="qtdDescargaMoagem" value="0"></div>
-                        <div><label>Arrumou Box?</label><select id="arrumouBoxMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div><label>Carregou Caco?</label><select id="carregouCaminhaoCacoMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        
-                        <div><label>Guardou Matéria?</label><select id="guardouMateriaMoagem" onchange="window.toggleCampoCondicional('guardouMateriaMoagem', 'divQtdGuardou')"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div id="divQtdGuardou" class="campo-condicional"><label>Qtd?</label><input type="number" id="qtdGuardouMateriaMoagem" value="0"></div>
-
-                        <div><label>Subiu Massa?</label><select id="subiuMassaMoagem" onchange="window.toggleCampoCondicional('subiuMassaMoagem', 'divQtdSubiu')"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div id="divQtdSubiu" class="campo-condicional"><label>Qtd?</label><input type="number" id="qtdSubiuMassaMoagem" value="0"></div>
-
-                        <div><label>Desceu Caçamba?</label><select id="desceuCacambaMoagem" onchange="window.toggleCampoCondicional('desceuCacambaMoagem', 'divQtdDesceu')"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div id="divQtdDesceu" class="campo-condicional"><label>Qtd?</label><input type="number" id="qtdDesceuCacambaMoagem" value="0"></div>
-
-                        <div><label>Virou Caçamba?</label><select id="virouCacambaMoagem" onchange="window.toggleCampoCondicional('virouCacambaMoagem', 'divQtdVirou')"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div id="divQtdVirou" class="campo-condicional"><label>Qtd?</label><input type="number" id="qtdVirouCacambaMoagem" value="0"></div>
-                    </fieldset>
-
-                    <fieldset class="moagem-fieldset">
-                        <legend>Auxiliar</legend>
-                        <div><label>Lavou Peneira?</label><select id="lavouPeneiraMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div><label>Limpou Moinho?</label><select id="limpouMoinhoMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                        <div><label>Lavou Dosador?</label><select id="lavouPeneiraDosadorMoagem"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-                    </fieldset>
-
-                    <div class="full-width"><label>Obs</label><textarea id="observacaoMoagem"></textarea></div>
-                    <div class="form-actions"><button type="submit">Lançar Moagem</button></div>
-                </form>
-            </section>
-            <section class="history-section">
-                <h2>Histórico Moagem</h2>
-                <table>
-                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>Operador</th><th>Cargas</th><th>Peso Total</th><th>Pontos</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaHistoricoMoagem"></tbody>
                 </table>
             </section>
         </div>
 
         <div id="tabPesagem" class="tab-content">
             <section>
-                <h2>Lançar Pesagem</h2>
+                <h2>Lançar Peso de Palete/Mesa</h2>
                 <form id="formPesagem">
-                    <div><label>Data</label><input type="date" id="dataPesagem" required></div>
-                    <div><label>Código</label><input type="text" id="codigoPalete" required placeholder="Ex: P01"></div>
-                    <div><label>Peso (kg)</label><input type="number" id="pesoTotalPalete" step="0.1" required></div>
-                    <div class="form-actions"><button type="submit">Salvar</button></div>
-                </form>
-            </section>
-            <section class="history-section">
-                <h2>Histórico Pesagem</h2>
-                <tbody id="tabelaPesagemBody"></tbody>
-            </section>
-        </div>
-
-        <div id="tabOperadores" class="tab-content">
-            <section>
-                <h2>Cadastrar Operador</h2>
-                <form id="formOperador">
-                    <div><label>Data Cadastro</label><input type="date" id="dataCadastroOperador" required></div>
-                    <div><label>Nome</label><input type="text" id="nomeOperador" required></div>
-                    <div><label>Turno</label>
-                        <select id="turnoOperador" required>
-                            <option value="">Selecione...</option>
-                            <option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option>
-                        </select>
+                    <div><label for="dataPesagem">Data</label><input type="date" id="dataPesagem" required></div>
+                    <div><label for="codigoPalete">Código do Palete/Mesa</label><input type="text" id="codigoPalete" required placeholder="Ex: P01, MESA-A"></div>
+                    <div><label for="pesoTotalPalete">Peso Total (kg)</label><input type="number" id="pesoTotalPalete" step="0.1" min="0" required></div>
+                    <div class="form-actions">
+                        <button type="button" class="secondary" onclick="document.getElementById('formPesagem').reset();">Limpar</button>
+                        <button type="submit">Lançar Peso</button>
                     </div>
-                    <div class="form-actions"><button type="submit">Cadastrar</button></div>
                 </form>
             </section>
             <section class="history-section">
-                <h2>Operadores Cadastrados</h2>
+                 <h2>Histórico de Pesagem</h2>
                 <table>
-                    <thead><tr><th>Data</th><th>Nome</th><th>Turno</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaOperadoresBody"></tbody>
+                    <thead><tr><th>Data</th><th>Código</th><th>Peso Total (kg)</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaPesagemBody"></tbody>
                 </table>
             </section>
         </div>
 
         <div id="tabDashboard" class="tab-content">
-            <h2>Dashboard</h2>
-            <div class="dashboard-filters">
-                <input type="date" id="dashFiltroDataInicio"> <input type="date" id="dashFiltroDataFim">
-                <select id="dashFiltroTurno"><option value="">Todos</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option></select>
+            <h2>Dashboard de Produção</h2>
+            <div class="filters dashboard-filters">
+                <div><label>Data Início</label><input type="date" id="dashFiltroDataInicio"></div>
+                <div><label>Data Fim</label><input type="date" id="dashFiltroDataFim"></div>
+                <div><label>Turno</label><select id="dashFiltroTurno"><option value="">Todos</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option></select></div>
+                <button id="printDashboardBtn" onclick="window.print()" style="background-color: var(--accent);">🖨️ Imprimir</button>
             </div>
+
             <div class="kpi-grid">
-                <div class="kpi-card"><h3>Meta FT</h3><div class="value" id="kpiTotalMeta">...</div></div>
-                <div class="kpi-card"><h3>Realizado FT</h3><div class="value" id="kpiTotalRealizado">...</div></div>
-                <div class="kpi-card"><h3>Eficiência</h3><div class="value" id="kpiEficiencia">...</div></div>
-                <div class="kpi-card"><h3>Retrabalho</h3><div class="value" id="kpiRetrabalho">...</div></div>
+                 <div class="kpi-card"><h3>Meta FT (kg)</h3> <div class="value" id="kpiTotalMeta">---</div></div>
+                 <div class="kpi-card"><h3>Realizado FT (kg)</h3> <div class="value" id="kpiTotalRealizado">---</div></div>
+                 <div class="kpi-card efficiency"><h3>Eficiência</h3> <div class="value" id="kpiEficiencia">---</div></div>
+                 <div class="kpi-card"><h3>Retrabalho (kg)</h3> <div class="value" id="kpiRetrabalho">---</div></div>
             </div>
+
             <div class="chart-grid">
-                <div class="chart-container"><canvas id="pieChartTurnos"></canvas></div>
                 <div class="chart-container">
-                    <select id="filtroTurnoGraficoMes"><option value="">Todos</option></select>
+                     <h3>Produção por Turno (%)</h3>
+                     <canvas id="pieChartTurnos"></canvas>
+                </div>
+                 <div class="chart-container">
+                    <h3>Produção Mensal (12 Meses)</h3>
+                    <select id="filtroTurnoGraficoMes" style="width: 100%; margin-bottom: 1rem;">
+                        <option value="">Todos os Turnos</option>
+                        <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option>
+                    </select>
                     <canvas id="barChartMensal"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="configModal" class="modal-overlay" onclick="window.closeConfigModal(event)">
+    <div id="configModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Configurações (Filtro Prensa)</h3>
-            <div class="config-grid">
-                <label>Peso Filtro</label><input type="number" id="pesoFiltro">
-                <label>Peso Placa</label><input type="number" id="pesoPlaca">
-                <label>Meta FT</label><input type="number" id="metaKgFT">
-                <label>Meta Palete</label><input type="number" id="metaKgPalete">
+            <h3>Configurações de Pesos e Metas</h3>
+            <div class="config-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                <div> <label>Peso por Filtro (kg)</label> <input type="number" id="pesoFiltro" step="0.1"> </div>
+                <div> <label>Peso por Placa (kg)</label> <input type="number" id="pesoPlaca" step="0.1"> </div>
+                <div> <label>Meta KG (Filtro)</label> <input type="number" id="metaKgFT" step="100"> </div>
+                <div> <label>Meta KG (Paletes)</label> <input type="number" id="metaKgPalete" step="100"> </div>
             </div>
-            <input type="password" id="configSenha" placeholder="Senha">
-            <button onclick="window.salvarConfiguracoes()">Salvar</button>
-        </div>
-    </div>
-
-    <div id="configMoagemModal" class="modal-overlay" onclick="window.closeConfigMoagemModal(event)">
-        <div class="modal-content">
-            <h3>Configurar Pontos (Moagem)</h3>
-            <div class="config-grid">
-                <label>Pts por KG</label><input type="number" id="pontosPorKgMoagem" step="0.001">
-                <label>Descarga</label><input type="number" id="pontosDescarga">
-                <label>Arrumou Box</label><input type="number" id="pontosArrumouBox">
-                <label>Carregou Caco</label><input type="number" id="pontosCarregouCaminhaoCaco">
-                <label>Lavou Peneira</label><input type="number" id="pontosLavouPeneira">
+            <div class="modal-actions" style="display:flex; gap:1rem;">
+                <input type="password" id="configSenha" placeholder="Senha para salvar" style="flex-grow: 1;">
+                <button type="button" class="secondary" onclick="closeConfigModal(event, true)">Cancelar</button>
+                <button onclick="salvarConfiguracoes()">Salvar</button>
             </div>
-            <input type="password" id="configMoagemSenha" placeholder="Senha">
-            <button onclick="window.salvarConfigPontosMoagem()">Salvar</button>
         </div>
     </div>
 
