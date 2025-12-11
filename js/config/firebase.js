@@ -21,9 +21,12 @@ export { db };
 
 // Exporta as coleções JÁ PRONTAS para uso
 // Assim você não precisa digitar collection(db, "nome") toda hora
+// Exporta as coleções JÁ PRONTAS para uso
 export const producoesCol = collection(db, "producoes");
 export const operadoresCol = collection(db, "operadores");
 export const massaCol = collection(db, "producao_massa");
 export const pesagemCol = collection(db, "pesagem_paletes");
+// NOVA COLEÇÃO:
+export const moagemCol = collection(db, "moagem");
 
 console.log("Firebase configurado e exportado via Módulo!");
