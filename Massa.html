@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Lançamento - Fábrica de Massa e Moagem</title>
+    <title>Lançamento - Fábrica de Massa</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="css/massa.css">
 </head>
 <body>
-    <header><h1>Fábrica de Massa & Moagem</h1></header>
+    <header><h1>Fábrica de Massa - Lançamento</h1></header>
 
     <div class="nav-container">
         <a href="index.html" class="back-link">❮ Voltar para Produção Cerâmica</a>
@@ -27,40 +27,25 @@
         <button id="openConfigBtn" title="Configurações de Pesos e Metas">⚙️</button>
         
         <div class="tab-nav">
-            <button class="tab-link active" onclick="showTab('producao')">Massa</button>
-            <button class="tab-link" onclick="showTab('moagem')">Moagem</button> <button class="tab-link" onclick="showTab('pesagem')">Pesagem Paletes</button>
+            <button class="tab-link active" onclick="showTab('producao')">Lançamentos</button>
+            <button class="tab-link" onclick="showTab('pesagem')">Pesagem</button>
             <button class="tab-link" onclick="showTab('dashboard')">Dashboard</button>
         </div>
 
         <div id="tabProducao" class="tab-content active">
             <section>
-                <h2>Lançar Produção de Massa</h2>
+                <h2>Lançar Produção</h2>
                 <form id="formMassa">
                     <div> <label for="data">Data</label> <input type="date" id="data" required> </div>
-                    
                     <div> <label for="turno">Turno</label> 
                         <select id="turno" required> 
                             <option value="">Selecione um turno</option> 
                             <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
-                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
                         </select> 
                     </div>
-
-                    <div>
-                        <label for="operadorMassa">Operador</label>
-                        <input type="text" id="operadorMassa" placeholder="Nome do Operador" list="listaOperadoresMassa" required>
-                        <datalist id="listaOperadoresMassa"></datalist>
-                    </div>
-                    <div>
-                        <label for="umidadeMassa">Umidade (%)</label>
-                        <input type="number" id="umidadeMassa" step="0.1" placeholder="Ex: 18.5">
-                    </div>
-                    <div>
-                        <label for="residuoMassa">Resíduo (%)</label>
-                        <input type="number" id="residuoMassa" step="0.1" placeholder="Ex: 2.0">
-                    </div>
-                    <div> <label for="qtdFT">Qtd. Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
-                    <div> <label for="qtdPlacas">Qtd. de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
+                    <div> <label for="qtdFT">Quantidade Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
+                    <div> <label for="qtdPlacas">Quantidade de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
                     
                     <fieldset class="paletes-fieldset">
                         <legend>Lançamento de Paletes</legend>
@@ -92,53 +77,22 @@
             </section>
             
             <section class="history-section">
-                <h2>Histórico de Massa</h2>
+                <h2>Histórico de Produção</h2>
                 <div class="filters">
                     <div> <label>Data Início</label> <input type="date" id="filtroDataInicio"> </div> 
                     <div> <label>Data Fim</label> <input type="date" id="filtroDataFim"> </div> 
-                    <button class="excel-btn" onclick="exportarExcelMassa()">Exportar Excel</button>
+                    <div> <label>Turno</label> 
+                        <select id="filtroTurno"> 
+                            <option value="">Todos os Turnos</option> 
+                            <option>Comercial</option> <option>Turno 1 (6x2)</option> <option>Turno 2 (6x2)</option> 
+                            <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
+                        </select> 
+                    </div>
+                    <button class="excel-btn" onclick="exportarExcel()">Exportar Excel</button>
                 </div>
                 <table>
-                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>Operador</th><th>% Palete</th><th>Retrabalho</th></tr></thead>
+                    <thead><tr><th></th><th>Data</th><th>Turno</th><th>% FT</th><th>% Palete</th><th>Retrabalho (kg)</th></tr></thead>
                     <tbody id="tabelaHistoricoBody"></tbody>
-                </table>
-            </section>
-        </div>
-
-        <div id="tabMoagem" class="tab-content">
-            <section>
-                <h2>Lançamento de Moagem</h2>
-                <form id="formMoagem">
-                    <div><label>Data</label><input type="date" id="dataMoagem" required></div>
-                    <div>
-                        <label>Turno</label>
-                        <select id="turnoMoagem" required>
-                            <option value="">Selecione</option>
-                            <option>Comercial</option><option>Turno 1</option><option>Turno 2</option><option>Turno 3</option><option>Turno 4</option>
-                        </select>
-                    </div>
-                    <div><label>Operador</label><input type="text" id="operadorMoagem" required></div>
-                    <div>
-                        <label>Tipo de Terra</label>
-                        <select id="tipoTerra" required>
-                            <option value="">Selecione</option>
-                            <option>Terra Dura</option><option>Terra Mole</option><option>Mista</option>
-                        </select>
-                    </div>
-                    <div><label>Umidade (%)</label><input type="number" id="umidadeMoagem" step="0.01"></div>
-                    <div><label>Resíduo (%)</label><input type="number" id="residuoMoagem" step="0.01"></div>
-                    <div class="full-width"><label>Observação</label><textarea id="obsMoagem"></textarea></div>
-                    <div class="form-actions">
-                        <button type="button" class="secondary" onclick="document.getElementById('formMoagem').reset()">Limpar</button>
-                        <button type="submit">Lançar Moagem</button>
-                    </div>
-                </form>
-            </section>
-            <section class="history-section">
-                <h2>Histórico de Moagem</h2>
-                <table>
-                    <thead><tr><th>Data</th><th>Turno</th><th>Operador</th><th>Material</th><th>Umidade</th><th>Resíduo</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaHistoricoMoagem"></tbody>
                 </table>
             </section>
         </div>
@@ -170,14 +124,17 @@
             <div class="filters dashboard-filters">
                 <div><label>Data Início</label><input type="date" id="dashFiltroDataInicio"></div>
                 <div><label>Data Fim</label><input type="date" id="dashFiltroDataFim"></div>
+                <div><label>Turno</label><select id="dashFiltroTurno"><option value="">Todos</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option><option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option></select></div>
                 <button id="printDashboardBtn" onclick="window.print()" style="background-color: var(--accent);">🖨️ Imprimir</button>
             </div>
+
             <div class="kpi-grid">
                  <div class="kpi-card"><h3>Meta FT (kg)</h3> <div class="value" id="kpiTotalMeta">---</div></div>
                  <div class="kpi-card"><h3>Realizado FT (kg)</h3> <div class="value" id="kpiTotalRealizado">---</div></div>
                  <div class="kpi-card efficiency"><h3>Eficiência</h3> <div class="value" id="kpiEficiencia">---</div></div>
                  <div class="kpi-card"><h3>Retrabalho (kg)</h3> <div class="value" id="kpiRetrabalho">---</div></div>
             </div>
+
             <div class="chart-grid">
                 <div class="chart-container">
                      <h3>Produção por Turno (%)</h3>
