@@ -383,10 +383,11 @@ window.exportarExcel = async function() {
             
             // Correção da DATA para o Excel agrupar certo
             let dataFormatada = r.data;
-            if (r.data && typeof r.data === 'string') {
-                const partes = r.data.split('-'); 
-                dataFormatada = new Date(partes[0], partes[1] - 1, partes[2]);
-            }
+           if (r.data && typeof r.data === 'string') {
+    const partes = r.data.split('-'); 
+    // ADICIONEI , 12, 0, 0 NO FINAL
+    dataFormatada = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+}
 
             // Cálculos de Eficiência para sair no Excel
             const metaFT = r.metaKgFT || appConfig.metaKgFT;
