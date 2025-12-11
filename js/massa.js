@@ -1,8 +1,8 @@
 // IMPORTAÇÕES DO MÓDULO CENTRAL
-import { db, massaCol, pesagemCol, moagemCol } from './config/firebase.js'; // Adicionei moagemCol
+import { db, massaCol, pesagemCol } from './config/firebase.js';
 import { obterDataLocalFormatada } from './utils/helpers.js';
 import { 
-    addDoc, getDocs, query, where, orderBy, deleteDoc, doc, getDoc, setDoc 
+    addDoc, getDocs, query, where, orderBy, deleteDoc, doc, getDoc, setDoc, updateDoc 
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 // ESTADO DA APLICAÇÃO
@@ -14,20 +14,19 @@ let pieChartTurnosInstance, barChartMensalInstance;
 document.addEventListener('DOMContentLoaded', async () => {
     // Configura datas iniciais
     const hojeStr = obterDataLocalFormatada();
-    const idsDeData = ['data', 'dataMoagem', 'filtroDataInicio', 'filtroDataFim', 'dataPesagem', 'dashFiltroDataInicio', 'dashFiltroDataFim'];
-    idsDeData.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = hojeStr; });
+    ['data', 'filtroDataInicio', 'filtroDataFim', 'dataPesagem', 'dashFiltroDataInicio', 'dashFiltroDataFim']
+        .forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = hojeStr; });
 
-    // Listeners de Eventos GERAIS
+    // Listeners de Eventos
     document.querySelectorAll('.palete-select, .palete-qtd').forEach(el => el.addEventListener('input', calcularPesoTotalPaletes));
-    ['filtroDataInicio', 'filtroDataFim'].forEach(id => document.getElementById(id).addEventListener('change', renderizarHistorico));
-    ['dashFiltroDataInicio', 'dashFiltroDataFim'].forEach(id => document.getElementById(id).addEventListener('change', atualizarDashboard));
+    ['filtroDataInicio', 'filtroDataFim', 'filtroTurno'].forEach(id => document.getElementById(id).addEventListener('change', renderizarHistorico));
+    ['dashFiltroDataInicio', 'dashFiltroDataFim', 'dashFiltroTurno'].forEach(id => document.getElementById(id).addEventListener('change', atualizarDashboard));
     document.getElementById('filtroTurnoGraficoMes').addEventListener('change', gerarGraficoProducaoMensal);
     document.getElementById('openConfigBtn').addEventListener('click', openConfigModal);
     
     // Formulários
     document.getElementById('formMassa').addEventListener('submit', salvarProducaoMassa);
     document.getElementById('formPesagem').addEventListener('submit', salvarPesagem);
-    document.getElementById('formMoagem').addEventListener('submit', salvarMoagem); // NOVO
 
     // Carregamento Inicial
     if(typeof Chart !== 'undefined') Chart.register(ChartDataLabels);
@@ -36,28 +35,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await carregarOpcoesPaletes();
     renderizarHistorico();
     renderizarHistoricoPesagem();
-    renderizarHistoricoMoagem(); // NOVO
     await atualizarDashboard();
     await gerarGraficoProducaoMensal();
 });
 
-// --- FUNÇÕES DE NAVEGAÇÃO UI ---
+// --- FUNÇÕES DE NAVEGAÇÃO UI (Globais para onclick HTML) ---
 window.showTab = function(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
-    
-    const tabId = tabName === 'producao' ? 'tabProducao' : 
-                  tabName === 'moagem' ? 'tabMoagem' : 
-                  tabName === 'pesagem' ? 'tabPesagem' : 'tabDashboard';
-                  
-    document.getElementById(tabId).classList.add('active');
-    
-    // Ativa o botão correspondente
-    const buttons = document.querySelectorAll('.tab-link');
-    if(tabName === 'producao') buttons[0].classList.add('active');
-    else if(tabName === 'moagem') buttons[1].classList.add('active');
-    else if(tabName === 'pesagem') buttons[2].classList.add('active');
-    else if(tabName === 'dashboard') buttons[3].classList.add('active');
+    document.getElementById(`tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+    // Adiciona classe active ao botão clicado (event.target precisa ser capturado ou passado, mas aqui simplificamos)
+    const btn = Array.from(document.querySelectorAll('.tab-link')).find(b => b.textContent.toLowerCase().includes(tabName.substr(0,4)));
+    if(btn) btn.classList.add('active');
 }
 
 window.openConfigModal = function() {
@@ -109,7 +98,7 @@ window.salvarConfiguracoes = async function() {
         alert('Configurações salvas!');
         document.getElementById('configSenha').value = '';
         window.closeConfigModal(null, true);
-        renderizarHistorico(); 
+        renderizarHistorico(); // Recalcula visualmente com novas metas
     } catch (e) { console.error(e); alert("Erro ao salvar."); }
 }
 
@@ -153,17 +142,24 @@ function calcularPesoTotalPaletes() {
 }
 
 // =========================================================
-// MASSA (ATUALIZADO COM OPERADOR E LABORATÓRIO)
+// ATUALIZAÇÃO: SALVAR PRODUÇÃO MASSA (COM PROTEÇÃO)
 // =========================================================
 async function salvarProducaoMassa(event) {
     event.preventDefault();
+
+    // 1. Bloqueia botão
     const btnSalvar = document.querySelector('#formMassa button[type="submit"]');
-    btnSalvar.disabled = true; btnSalvar.textContent = "Salvando...";
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
 
     const kgPaleteReal = parseFloat(document.getElementById('kgPalete').value);
+    
+    // Se validação falhar, precisamos desbloquear o botão antes de sair
     if (kgPaleteReal <= 0) {
         alert("O KG Total de Paletes deve ser maior que zero.");
-        btnSalvar.disabled = false; btnSalvar.textContent = "Lançar Produção";
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
         return;
     }
 
@@ -177,11 +173,6 @@ async function salvarProducaoMassa(event) {
     const novoRegistro = {
         data: document.getElementById('data').value,
         turno: document.getElementById('turno').value,
-        // NOVOS CAMPOS
-        operador: document.getElementById('operadorMassa').value,
-        umidade: parseFloat(document.getElementById('umidadeMassa').value) || 0,
-        residuo: parseFloat(document.getElementById('residuoMassa').value) || 0,
-        // FIM NOVOS CAMPOS
         qtdFT, qtdPlacas, kgPalete: kgPaleteReal,
         observacao: document.getElementById('observacao').value,
         kgCalculado, retrabalhoKg,
@@ -191,14 +182,18 @@ async function salvarProducaoMassa(event) {
 
     try {
         await addDoc(massaCol, novoRegistro);
-        
-        // Alerta Telegram
+
+        // --- LÓGICA DE ALERTA (MASSA) ---
+        // 1. Calcula as eficiências para o alerta
         const metaFT = appConfig.metaKgFT || 1;
         const metaPalete = appConfig.metaKgPalete || 1;
+        
         const eficFT = (kgCalculado / metaFT) * 100;
         const eficPalete = (kgPaleteReal / metaPalete) * 100;
 
+        // 2. Se ALGUMA das duas for menor que 90%, dispara o alerta
         if (eficFT < 66 || eficPalete < 70) {
+            // Chama a função que criamos lá no final do arquivo
             enviarAlertaMassa(
                 document.getElementById('turno').value,
                 eficFT.toFixed(1),
@@ -206,29 +201,34 @@ async function salvarProducaoMassa(event) {
                 document.getElementById('observacao').value
             );
         }
+        // ---------------------------------
 
         alert('Produção lançada! ✅');
         renderizarHistorico();
         window.limparFormMassa();
     } catch (e) { 
-        console.error(e); alert("Erro ao salvar."); 
+        console.error(e); 
+        alert("Erro ao salvar."); 
     } finally {
-        btnSalvar.disabled = false; btnSalvar.textContent = "Lançar Produção";
+        // 2. Libera botão
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
     }
 }
-
 async function renderizarHistorico() {
     const tbody = document.getElementById('tabelaHistoricoBody');
     tbody.innerHTML = `<tr><td colspan="6">Carregando...</td></tr>`;
     
     const filtro = {
         ini: document.getElementById('filtroDataInicio').value,
-        fim: document.getElementById('filtroDataFim').value
+        fim: document.getElementById('filtroDataFim').value,
+        turno: document.getElementById('filtroTurno').value
     };
     
     let constraints = [orderBy("data", "desc"), orderBy("timestamp", "desc")];
     if (filtro.ini) constraints.push(where("data", ">=", filtro.ini));
     if (filtro.fim) constraints.push(where("data", "<=", filtro.fim));
+    if (filtro.turno) constraints.push(where("turno", "==", filtro.turno));
 
     try {
         const snap = await getDocs(query(massaCol, ...constraints));
@@ -237,32 +237,36 @@ async function renderizarHistorico() {
 
         snap.forEach(doc => {
             const reg = doc.data();
+            const metaFT = reg.metaKgFT || appConfig.metaKgFT;
             const metaPalete = reg.metaKgPalete || appConfig.metaKgPalete;
+            const eficFT = (reg.kgCalculado / (metaFT || 1)) * 100;
             const eficPalete = (reg.kgPalete / (metaPalete || 1)) * 100;
+            
             const getEficClass = (p) => p >= 98 ? 'efficiency-good' : (p >= 90 ? 'efficiency-ok' : 'efficiency-bad');
+            const retrabalhoClasse = (reg.retrabalhoKg > 0) ? 'efficiency-good' : ((reg.retrabalhoKg < 0) ? 'efficiency-bad' : '');
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><button class="expand-btn" onclick="toggleDetalhes('${doc.id}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
                 </button></td>
-                <td>${new Date(reg.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                <td>${new Date(reg.data + 'T03:00:00').toLocaleDateString('pt-BR')}</td>
                 <td>${reg.turno}</td>
-                <td>${reg.operador || '-'}</td>
-                <td class="${getEficClass(eficPalete)}">${eficPalete.toFixed(1)}%</td>
-                <td>${reg.retrabalhoKg ? reg.retrabalhoKg.toFixed(0) : '0'}</td>
+                <td class="${getEficClass(eficFT)}">${eficFT.toFixed(2)}%</td>
+                <td class="${getEficClass(eficPalete)}">${eficPalete.toFixed(2)}%</td>
+                <td class="${retrabalhoClasse}">${reg.retrabalhoKg ? reg.retrabalhoKg.toFixed(2) : '0.00'}</td>
             `;
             
             const trDet = document.createElement('tr');
             trDet.id = `detalhes-${doc.id}`; trDet.className = 'linha-detalhes';
             trDet.innerHTML = `<td colspan="6">
                 <div class="detalhe-grid">
-                    <div><span>KG Real (Palete):</span> ${reg.kgPalete.toFixed(2)} kg</div>
-                    <div><span>KG Teórico (FT):</span> ${reg.kgCalculado.toFixed(2)} kg</div>
-                    <div><span>Umidade:</span> ${reg.umidade ? reg.umidade + '%' : '-'}</div>
-                    <div><span>Resíduo:</span> ${reg.residuo ? reg.residuo + '%' : '-'}</div>
+                    <div><span>Filtro Prensa:</span> ${reg.kgCalculado.toFixed(2)} kg</div>
+                    <div><span>Palete:</span> ${reg.kgPalete.toFixed(2)} kg</div>
+                    <div><span>Retrabalho:</span> ${reg.retrabalhoKg ? reg.retrabalhoKg.toFixed(2) : '0.00'} kg</div>
                     <div><span>Qtd. Filtros:</span> ${reg.qtdFT}</div>
                     <div><span>Qtd. Placas:</span> ${reg.qtdPlacas}</div>
+                    <div><span>Meta FT:</span> ${metaFT} kg</div>
                     <div style="grid-column: 1 / -1;"><span>Obs:</span> ${reg.observacao || '-'}</div>
                     <div><button class="delete-btn" onclick="deletarRegistroMassa('${doc.id}')">Excluir</button></div>
                 </div>
@@ -278,91 +282,16 @@ window.deletarRegistroMassa = async function(id) {
 }
 
 // =========================================================
-// MOAGEM (NOVA FUNCIONALIDADE)
-// =========================================================
-async function salvarMoagem(e) {
-    e.preventDefault();
-    const btn = document.querySelector('#formMoagem button[type="submit"]');
-    btn.disabled = true; btn.textContent = "Salvando...";
-
-    const novoRegistro = {
-        data: document.getElementById('dataMoagem').value,
-        turno: document.getElementById('turnoMoagem').value,
-        operador: document.getElementById('operadorMoagem').value,
-        tipoTerra: document.getElementById('tipoTerra').value,
-        umidade: parseFloat(document.getElementById('umidadeMoagem').value) || 0,
-        residuo: parseFloat(document.getElementById('residuoMoagem').value) || 0,
-        observacao: document.getElementById('obsMoagem').value,
-        timestamp: new Date().toISOString()
-    };
-
-    try {
-        await addDoc(moagemCol, novoRegistro);
-        alert('Moagem lançada com sucesso!');
-        document.getElementById('formMoagem').reset();
-        document.getElementById('dataMoagem').value = obterDataLocalFormatada();
-        renderizarHistoricoMoagem();
-    } catch (error) {
-        console.error("Erro ao salvar moagem:", error);
-        alert("Erro ao salvar moagem.");
-    } finally {
-        btn.disabled = false; btn.textContent = "Lançar Moagem";
-    }
-}
-
-async function renderizarHistoricoMoagem() {
-    const tbody = document.getElementById('tabelaHistoricoMoagem');
-    tbody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
-
-    try {
-        const q = query(moagemCol, orderBy("data", "desc"), orderBy("timestamp", "desc"));
-        const snapshot = await getDocs(q);
-
-        tbody.innerHTML = '';
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="7">Nenhum registro de moagem.</td></tr>';
-            return;
-        }
-
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${new Date(data.data + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-                <td>${data.turno}</td>
-                <td>${data.operador}</td>
-                <td>${data.tipoTerra}</td>
-                <td>${data.umidade}%</td>
-                <td>${data.residuo}%</td>
-                <td><button class="delete-btn" onclick="deletarMoagem('${docSnap.id}')">Excluir</button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error("Erro ao carregar moagem:", error);
-        tbody.innerHTML = '<tr><td colspan="7">Erro ao carregar dados.</td></tr>';
-    }
-}
-
-window.deletarMoagem = async function(id) {
-    if (prompt("Senha:") !== "pb2025") return alert("Senha incorreta!");
-    if (confirm("Tem certeza que deseja excluir este registro de moagem?")) {
-        try {
-            await deleteDoc(doc(db, "moagem", id));
-            renderizarHistoricoMoagem();
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
-        }
-    }
-}
-
-// =========================================================
-// PESAGEM (MANTIDA)
+// ATUALIZAÇÃO: SALVAR PESAGEM (COM PROTEÇÃO)
 // =========================================================
 async function salvarPesagem(e) {
     e.preventDefault();
+
+    // 1. Bloqueia botão
     const btnSalvar = document.querySelector('#formPesagem button[type="submit"]');
-    btnSalvar.disabled = true; btnSalvar.textContent = "Salvando...";
+    const textoOriginal = btnSalvar.textContent;
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = "Salvando...";
 
     const reg = {
         data: document.getElementById('dataPesagem').value,
@@ -371,7 +300,12 @@ async function salvarPesagem(e) {
         timestamp: new Date().toISOString()
     };
 
-    if(!reg.codigo) { alert("Código obrigatório"); btnSalvar.disabled = false; return; }
+    if(!reg.codigo) {
+        alert("Código obrigatório");
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+        return;
+    }
 
     try {
         await addDoc(pesagemCol, reg);
@@ -380,8 +314,14 @@ async function salvarPesagem(e) {
         carregarOpcoesPaletes();
         document.getElementById('formPesagem').reset();
         document.getElementById('dataPesagem').value = obterDataLocalFormatada();
-    } catch(e) { console.error(e); alert("Erro ao salvar pesagem."); } 
-    finally { btnSalvar.disabled = false; btnSalvar.textContent = "Lançar Peso"; }
+    } catch(e) { 
+        console.error(e); 
+        alert("Erro ao salvar pesagem."); 
+    } finally {
+        // 2. Libera botão
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = textoOriginal;
+    }
 }
 
 async function renderizarHistoricoPesagem() {
@@ -396,7 +336,7 @@ async function renderizarHistoricoPesagem() {
             const o = d.data();
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${new Date(o.data+"T12:00:00").toLocaleDateString("pt-BR")}</td>
+                <td>${new Date(o.data+"T03:00:00").toLocaleDateString("pt-BR")}</td>
                 <td>${o.codigo}</td><td>${o.peso.toFixed(2)} kg</td>
                 <td><button class="delete-btn" onclick="deletarPesagem('${d.id}')">Excluir</button></td>`;
             tbody.appendChild(tr);
@@ -413,106 +353,144 @@ window.deletarPesagem = async function(id) {
 }
 
 // =========================================================
-// EXPORTAR EXCEL (MASSA - ATUALIZADO)
+// CORREÇÃO: EXPORTAR EXCEL FÁBRICA DE MASSA
 // =========================================================
-window.exportarExcelMassa = async function() {
+window.exportarExcel = async function() {
     alert("Preparando exportação da Fábrica de Massa...");
+    
+    // 1. Pega os valores dos filtros da tela
     const filtro = {
         ini: document.getElementById('filtroDataInicio').value,
-        fim: document.getElementById('filtroDataFim').value
+        fim: document.getElementById('filtroDataFim').value,
+        turno: document.getElementById('filtroTurno').value
     };
-    let constraints = [orderBy("data", "desc")];
+
+    // 2. Prepara a busca no Banco de Dados
+    let constraints = [orderBy("data", "desc"), orderBy("timestamp", "desc")];
+    
     if (filtro.ini) constraints.push(where("data", ">=", filtro.ini));
     if (filtro.fim) constraints.push(where("data", "<=", filtro.fim));
+    if (filtro.turno) constraints.push(where("turno", "==", filtro.turno));
 
     try {
         const snap = await getDocs(query(massaCol, ...constraints));
-        if (snap.empty) return alert("Nenhum dado encontrado.");
+        
+        if (snap.empty) return alert("Nenhum dado encontrado para exportar.");
 
+        // 3. Formata os dados para o Excel
         const dataToExport = snap.docs.map(doc => {
             const r = doc.data();
+            
+            // Correção da DATA para o Excel agrupar certo
             let dataFormatada = r.data;
-            if (r.data && typeof r.data === 'string') {
-                const partes = r.data.split('-'); 
-                dataFormatada = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0); // BUG CORRIGIDO
-            }
+           if (r.data && typeof r.data === 'string') {
+    const partes = r.data.split('-'); 
+    // ADICIONEI , 12, 0, 0 NO FINAL
+    dataFormatada = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+}
 
+            // Cálculos de Eficiência para sair no Excel
             const metaFT = r.metaKgFT || appConfig.metaKgFT;
             const metaPalete = r.metaKgPalete || appConfig.metaKgPalete;
+            
+            // Evita divisão por zero
+            const eficFT = metaFT > 0 ? (r.kgCalculado / metaFT) * 100 : 0;
             const eficPalete = metaPalete > 0 ? (r.kgPalete / metaPalete) * 100 : 0;
 
             return {
                 "Data": dataFormatada,
                 "Turno": r.turno,
-                "Operador": r.operador || "",
-                "Umidade (%)": r.umidade || 0,
-                "Resíduo (%)": r.residuo || 0,
-                "Qtd Filtros": r.qtdFT,
+                "Qtd Filtros (FT)": r.qtdFT,
                 "Qtd Placas": r.qtdPlacas,
+                "KG Filtro (Teórico)": r.kgCalculado.toFixed(2),
                 "KG Palete (Real)": r.kgPalete.toFixed(2),
+                "Retrabalho (kg)": r.retrabalhoKg ? r.retrabalhoKg.toFixed(2) : "0.00",
+                "% Efic. FT": eficFT.toFixed(2) + "%",
                 "% Efic. Palete": eficPalete.toFixed(2) + "%",
+                "Meta FT Utilizada": metaFT,
                 "Observação": r.observacao || ""
             };
         });
         
+        // 4. Gera o arquivo
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Producao_Massa");
+        
         XLSX.writeFile(wb, `Massa_${obterDataLocalFormatada()}.xlsx`);
-    } catch(e) { console.error("Erro Excel:", e); alert("Erro ao exportar."); }
+
+    } catch(e) { 
+        console.error("Erro Excel Massa:", e); 
+        alert("Erro ao exportar. Verifique o console."); 
+    }
 }
 
 // =========================================================
-// DASHBOARD E TELEGRAM (MANTIDOS)
+// ATUALIZAÇÃO: DASHBOARD MASSA (LÓGICA COMPLETA)
 // =========================================================
+
 async function atualizarDashboard() {
-    // (Código do dashboard mantido igual, apenas chamando getDocs na massaCol)
-    // Para simplificar a resposta, assumo que você manterá a lógica visual de gráficos
-    // que já existe, focando nas alterações de integração.
-    // ... Código dashboard anterior ...
-    // Vou reincluir a parte principal para garantir que funcione:
     const dataInicio = document.getElementById('dashFiltroDataInicio').value;
     const dataFim = document.getElementById('dashFiltroDataFim').value;
+    const turno = document.getElementById('dashFiltroTurno').value;
+
     if (!dataInicio || !dataFim) return;
 
-    ['kpiTotalMeta', 'kpiTotalRealizado', 'kpiEficiencia', 'kpiRetrabalho'].forEach(id => document.getElementById(id).textContent = '...');
+    // Coloca "..." enquanto carrega
+    ['kpiTotalMeta', 'kpiTotalRealizado', 'kpiEficiencia', 'kpiRetrabalho'].forEach(id => 
+        document.getElementById(id).textContent = '...'
+    );
 
     try {
+        // 1. Busca dados no Firebase
         let constraints = [where("data", ">=", dataInicio), where("data", "<=", dataFim)];
+        if (turno) constraints.push(where("turno", "==", turno));
+        
         const q = query(massaCol, ...constraints);
-        const snap = await getDocs(q);
-        const dados = snap.docs.map(doc => doc.data());
+        const querySnapshot = await getDocs(q);
+        const dados = querySnapshot.docs.map(doc => doc.data());
 
+        // 2. Calcula KPIs
         const totais = dados.reduce((acc, reg) => {
             acc.meta += reg.metaKgFT || 0;
-            acc.realizado += reg.kgCalculado || 0; 
+            acc.realizado += reg.kgCalculado || 0; // Realizado FT (Filtro Prensa)
             acc.retrabalho += reg.retrabalhoKg || 0;
             return acc;
         }, { meta: 0, realizado: 0, retrabalho: 0 });
 
         const eficiencia = totais.meta > 0 ? (totais.realizado / totais.meta) * 100 : 0;
 
+        // 3. Atualiza na Tela (KPIs)
         document.getElementById('kpiTotalMeta').textContent = totais.meta.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         document.getElementById('kpiTotalRealizado').textContent = totais.realizado.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         document.getElementById('kpiRetrabalho').textContent = totais.retrabalho.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
         
         const elEficiencia = document.getElementById('kpiEficiencia');
         elEficiencia.textContent = `${eficiencia.toFixed(2)}%`;
-        elEficiencia.className = 'value ' + (eficiencia >= 98 ? 'good' : eficiencia >= 90 ? 'efficiency-ok' : 'bad');
+        
+        // Cores da Eficiência
+        elEficiencia.className = 'value'; // reseta classes
+        if (eficiencia >= 98) elEficiencia.classList.add('good'); // Verde
+        else if (eficiencia >= 90) elEficiencia.classList.add('efficiency-ok'); // Laranja (definir css se quiser)
+        else elEficiencia.classList.add('bad'); // Vermelho
 
+        // 4. Gera Gráfico de Pizza (Produção por Turno)
         gerarGraficoPizzaTurnos(dados);
 
-    } catch (error) { console.error("Erro Dashboard Massa:", error); }
+    } catch (error) {
+        console.error("Erro Dashboard Massa:", error);
+    }
 }
 
 function gerarGraficoPizzaTurnos(dados) {
     const producaoPorTurno = dados.reduce((acc, reg) => {
         if (!acc[reg.turno]) acc[reg.turno] = 0;
-        acc[reg.turno] += reg.kgPalete || 0;
+        acc[reg.turno] += reg.kgPalete || 0; // Gráfico usa o KG Palete (Real)
         return acc;
     }, {});
 
     if (pieChartTurnosInstance) pieChartTurnosInstance.destroy();
+    
     const ctx = document.getElementById('pieChartTurnos').getContext('2d');
     pieChartTurnosInstance = new Chart(ctx, {
         type: 'pie',
@@ -527,10 +505,13 @@ function gerarGraficoPizzaTurnos(dados) {
             responsive: true,
             plugins: {
                 legend: { position: 'bottom' },
-                datalabels: { color: '#fff', formatter: (val, ctx) => {
-                    const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                    return sum === 0 ? '0%' : (val * 100 / sum).toFixed(1) + '%';
-                }}
+                datalabels: {
+                    color: '#fff',
+                    formatter: (value, ctx) => {
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        return sum === 0 ? '0%' : (value * 100 / sum).toFixed(1) + '%';
+                    }
+                }
             }
         }
     });
@@ -538,6 +519,8 @@ function gerarGraficoPizzaTurnos(dados) {
 
 async function gerarGraficoProducaoMensal() {
     const turnoFiltro = document.getElementById('filtroTurnoGraficoMes').value;
+    
+    // Data de 1 ano atrás
     const hoje = new Date();
     const dozeMesesAtras = new Date(hoje.getFullYear() - 1, hoje.getMonth(), 1);
     const dataInicioStr = dozeMesesAtras.toISOString().split('T')[0];
@@ -547,49 +530,87 @@ async function gerarGraficoProducaoMensal() {
         if (turnoFiltro) constraints.push(where("turno", "==", turnoFiltro));
 
         const q = query(massaCol, ...constraints);
-        const snap = await getDocs(q);
-        const dados = snap.docs.map(doc => doc.data());
+        const querySnapshot = await getDocs(q);
+        const dados = querySnapshot.docs.map(doc => doc.data());
 
         const producaoPorMes = {};
+        // Cria chaves para os últimos 12 meses
         for(let i=11; i>=0; i--) {
             const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            // Formato Chave: YYYY-MM
             const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            // Formato Label: MM/YY
             const label = `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear().toString().substr(2)}`;
             producaoPorMes[chave] = { label: label, valor: 0 };
         }
 
         dados.forEach(reg => {
-            const mesAno = reg.data.substring(0, 7);
-            if (producaoPorMes[mesAno]) producaoPorMes[mesAno].valor += reg.kgPalete || 0;
+            const mesAno = reg.data.substring(0, 7); // Pega YYYY-MM
+            if (producaoPorMes[mesAno]) {
+                producaoPorMes[mesAno].valor += reg.kgPalete || 0;
+            }
         });
 
         const labels = Object.values(producaoPorMes).map(item => item.label);
         const data = Object.values(producaoPorMes).map(item => item.valor);
 
         if (barChartMensalInstance) barChartMensalInstance.destroy();
+        
         const ctx = document.getElementById('barChartMensal').getContext('2d');
         barChartMensalInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [{ label: 'Produção Total (kg)', data: data, backgroundColor: '#0077cc', borderRadius: 4 }]
+                datasets: [{
+                    label: 'Produção Total (kg)',
+                    data: data,
+                    backgroundColor: '#0077cc',
+                    borderRadius: 4
+                }]
             },
             options: { 
                 scales: { y: { beginAtZero: true } },
-                plugins: { datalabels: { anchor: 'end', align: 'top', color: '#444', formatter: (val) => val > 0 ? (val/1000).toFixed(0) + 'k' : '' }, legend: { display: false } }
+                plugins: {
+                    datalabels: {
+                        anchor: 'end', align: 'top', color: '#444',
+                        formatter: (val) => val > 0 ? (val/1000).toFixed(0) + 'k' : ''
+                    },
+                    legend: { display: false }
+                }
             }
         });
     } catch (error) { console.error("Erro Gráfico Mensal:", error); }
 }
-
+// =========================================================
+// NOTIFICAÇÃO TELEGRAM - FÁBRICA DE MASSA
+// =========================================================
 async function enviarAlertaMassa(turno, eficFT, eficPalete, observacao) {
+    // SEUS DADOS
     const TELEGRAM_TOKEN = "8470917811:AAFfAASPHXtIAfoEoh7OlGDWMUcqlZVXWJo"; 
     const CHAT_ID = "-5090707282"; 
-    const mensagem = `🚨 *ALERTA FÁBRICA DE MASSA* 🚨\n\n⏰ *Turno:* ${turno}\n📉 *Efic. Filtro:* ${eficFT}%\n📉 *Efic. Palete:* ${eficPalete}%\n📝 *Obs:* ${observacao || "Sem observação"}\n\nVERIFIQUE COM O TURNO.`;
+
+    // Mensagem personalizada para Massa
+    const mensagem = `🚨 *ALERTA FÁBRICA DE MASSA* 🚨\n\n` +
+                     `⏰ *Turno:* ${turno}\n` +
+                     `📉 *Efic. Filtro:* ${eficFT}%\n` +
+                     `📉 *Efic. Palete:* ${eficPalete}%\n` +
+                     `📝 *Obs:* ${observacao || "Sem observação"}\n\n` +
+                     `VERIFIQUE COM O TURNO.`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
     try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: CHAT_ID, text: mensagem, parse_mode: "Markdown" })
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: mensagem,
+                parse_mode: "Markdown"
+            })
         });
-    } catch (error) { console.error("Erro Telegram:", error); }
+        console.log("✅ Alerta de Massa enviado!");
+    } catch (error) {
+        console.error("Erro Telegram:", error);
+    }
 }
