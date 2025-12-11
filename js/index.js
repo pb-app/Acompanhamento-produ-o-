@@ -507,10 +507,10 @@ window.exportarExcel = async function() {
             // Isso faz o Excel entender que é uma data
             let dataFormatada = r.data;
             if (r.data && typeof r.data === 'string') {
-                const partes = r.data.split('-'); // Divide [2025, 11, 29]
-                // Cria data no fuso horário local (Ano, Mês-1, Dia)
-                dataFormatada = new Date(partes[0], partes[1] - 1, partes[2]);
-            }
+    const partes = r.data.split('-'); 
+    // ADICIONEI , 12, 0, 0 NO FINAL PARA DEFINIR O HORÁRIO COMO 12:00
+    dataFormatada = new Date(partes[0], partes[1] - 1, partes[2], 12, 0, 0);
+}
 
             return {
                 "Data": dataFormatada, // <--- Aqui está a mágica
