@@ -51,8 +51,33 @@
         <option value="filtro3">Filtro 3 (Novo)</option> 
     </select> 
 </div>
-                    <div> <label for="qtdFT">Quantidade Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
-                    <div> <label for="qtdPlacas">Quantidade de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
+                    <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+    <h4 style="margin: 0 0 5px 0; color: #555;">Filtros 1 e 2 (Padrão)</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="qtdFT">Qtd Filtros Cheios</label>
+            <input type="number" id="qtdFT" placeholder="0" min="0">
+        </div>
+        <div>
+            <label for="qtdPlacas">Qtd Placas (Sobra)</label>
+            <input type="number" id="qtdPlacas" placeholder="0" min="0">
+        </div>
+    </div>
+</div>
+
+<div style="background: #e6f7ff; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #b3d8ff;">
+    <h4 style="margin: 0 0 5px 0; color: #0056b3;">Filtro 3 (Novo/Pesado)</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="qtdFT3">Qtd Filtros 3</label>
+            <input type="number" id="qtdFT3" placeholder="0" min="0">
+        </div>
+        <div>
+            <label for="qtdPlacas3">Qtd Placas 3</label>
+            <input type="number" id="qtdPlacas3" placeholder="0" min="0">
+        </div>
+    </div>
+</div>
                     
                     <fieldset class="paletes-fieldset">
                         <legend>Lançamento de Paletes</legend>
@@ -186,4 +211,5 @@
     <script type="module" src="js/massa.js"></script>
 </body>
 </html>
+
 
