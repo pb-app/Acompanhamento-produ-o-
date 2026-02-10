@@ -165,7 +165,6 @@ function calcularPesoTotalPaletes() {
 async function salvarProducaoMassa(event) {
     event.preventDefault();
 
-    // ... (código anterior de bloquear botão continua igual) ...
     const btnSalvar = document.querySelector('#formMassa button[type="submit"]');
     const textoOriginal = btnSalvar.textContent;
     btnSalvar.disabled = true;
@@ -173,7 +172,6 @@ async function salvarProducaoMassa(event) {
 
     const kgPaleteReal = parseFloat(document.getElementById('kgPalete').value);
 
-    // Validação
     if (kgPaleteReal <= 0) {
         alert("O KG Total de Paletes deve ser maior que zero.");
         btnSalvar.disabled = false;
@@ -181,34 +179,34 @@ async function salvarProducaoMassa(event) {
         return;
     }
 
-    // --- NOVA LÓGICA DE CÁLCULO ---
-    const qtdFT = parseInt(document.getElementById('qtdFT').value);
-    const qtdPlacas = parseInt(document.getElementById('qtdPlacas').value);
-    const tipoFiltro = document.getElementById('tipoFiltro').value; // Pega o select
+    // --- PEGA OS VALORES DOS 4 CAMPOS (Se estiver vazio, conta como 0) ---
+    const qtdFT = parseInt(document.getElementById('qtdFT').value) || 0;
+    const qtdPlacas = parseInt(document.getElementById('qtdPlacas').value) || 0;
+    
+    const qtdFT3 = parseInt(document.getElementById('qtdFT3').value) || 0;
+    const qtdPlacas3 = parseInt(document.getElementById('qtdPlacas3').value) || 0;
 
-    let pesoFiltroUsado, pesoPlacaUsado;
-
-    if (tipoFiltro === 'filtro3') {
-        // Usa os pesos do Filtro 3
-        pesoFiltroUsado = appConfig.pesoFiltro3;
-        pesoPlacaUsado = appConfig.pesoPlaca3;
-    } else {
-        // Usa os pesos Padrão (Filtro 1 e 2)
-        pesoFiltroUsado = appConfig.pesoFiltro;
-        pesoPlacaUsado = appConfig.pesoPlaca;
-    }
-
-    // Verifica se os pesos estão configurados
-    if (!pesoFiltroUsado || pesoFiltroUsado === 0) {
-        alert(`Atenção: O peso para o ${tipoFiltro === 'filtro3' ? 'Filtro 3' : 'Filtro Padrão'} está zerado nas configurações!`);
+    // --- VALIDA SE DIGITOU PELO MENOS ALGUMA COISA ---
+    if (qtdFT === 0 && qtdPlacas === 0 && qtdFT3 === 0 && qtdPlacas3 === 0) {
+        alert("Você precisa preencher a quantidade de Filtros ou Placas (Padrão ou Filtro 3).");
         btnSalvar.disabled = false;
         btnSalvar.textContent = textoOriginal;
         return;
     }
 
-    // Cálculo final usando a variável dinâmica
-    const kgCalculado = (qtdFT * pesoFiltroUsado) + (qtdPlacas * pesoPlacaUsado);
-    // --------------------------------
+    // --- CÁLCULO HÍBRIDO (SOMA TUDO) ---
+    // Grupo 1: Antigos
+    const pesoTotalPadrao = (qtdFT * appConfig.pesoFiltro) + (qtdPlacas * appConfig.pesoPlaca);
+    
+    // Grupo 2: Novo (Filtro 3)
+    // Verifica se configurou o peso, senão avisa (opcional, ou usa 0)
+    const pesoFiltro3Config = appConfig.pesoFiltro3 || 0;
+    const pesoPlaca3Config = appConfig.pesoPlaca3 || 0;
+    const pesoTotalNovo = (qtdFT3 * pesoFiltro3Config) + (qtdPlacas3 * pesoPlaca3Config);
+
+    // Soma final
+    const kgCalculado = pesoTotalPadrao + pesoTotalNovo;
+    // ----------------------------------------------------
 
     const retrabalhoCalculado = kgPaleteReal - kgCalculado;
     const retrabalhoKg = Math.max(0, retrabalhoCalculado);
@@ -216,9 +214,13 @@ async function salvarProducaoMassa(event) {
     const novoRegistro = {
         data: document.getElementById('data').value,
         turno: document.getElementById('turno').value,
-        tipoFiltro: tipoFiltro, // Salvamos qual filtro foi usado para histórico
+        
+        // Salvamos todos os detalhes agora
         qtdFT, 
-        qtdPlacas, 
+        qtdPlacas,
+        qtdFT3,     // Novo campo no banco
+        qtdPlacas3, // Novo campo no banco
+        
         kgPalete: kgPaleteReal,
         observacao: document.getElementById('observacao').value,
         kgCalculado, 
@@ -228,11 +230,10 @@ async function salvarProducaoMassa(event) {
         metaKgPalete: appConfig.metaKgPalete
     };
 
-    // ... (o restante da função: addDoc, alertas, etc., continua igual) ...
     try {
         await addDoc(massaCol, novoRegistro);
         
-        // LÓGICA DE ALERTA (Mantém igual)
+        // Lógica de Alerta (Mantém igual)
         const metaFT = appConfig.metaKgFT || 1;
         const metaPalete = appConfig.metaKgPalete || 1;
         const eficFT = (kgCalculado / metaFT) * 100;
@@ -247,9 +248,14 @@ async function salvarProducaoMassa(event) {
             );
         }
 
-        alert('Produção lançada! ✅');
+        alert('Produção lançada com sucesso! ✅');
         renderizarHistorico();
-        window.limparFormMassa();
+        
+        // Limpar campos
+        document.getElementById('formMassa').reset();
+        // Recarregar data e config se necessário
+        document.getElementById('data').value = obterDataLocalFormatada();
+        
     } catch (e) { 
         console.error(e); 
         alert("Erro ao salvar."); 
