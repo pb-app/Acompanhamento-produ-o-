@@ -12,7 +12,7 @@ const ASSETS_TO_CACHE = [
   './js/config/firebase.js',
   './js/utils/helpers.js',
   './manifest.json',
-  // './icons/icon-180x180.png' 
+  './icons/icon-180x180.png' 
 ];
 
 // Instalação
