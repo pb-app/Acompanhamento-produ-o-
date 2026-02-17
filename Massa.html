@@ -44,8 +44,34 @@
                             <option>Turno 3 (6x2)</option> <option>Turno 4 (6x2)</option> <option>Turno 1 (5x2)</option> <option>Turno 2 (5x2)</option> 
                         </select> 
                     </div>
-                    <div> <label for="qtdFT">Quantidade Filtro-prensagem (FT)</label> <input type="number" id="qtdFT" min="0" required> </div>
-                    <div> <label for="qtdPlacas">Quantidade de Placas</label> <input type="number" id="qtdPlacas" min="0" value="0" required> </div>
+                   
+                    <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+    <h4 style="margin: 0 0 5px 0; color: #555;">Filtros 1 e 2 </h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="qtdFT">Qtd Filtros </label>
+            <input type="number" id="qtdFT" placeholder="0" min="0">
+        </div>
+        <div>
+            <label for="qtdPlacas">Qtd Placas </label>
+            <input type="number" id="qtdPlacas" placeholder="0" min="0">
+        </div>
+    </div>
+</div>
+
+<div style="background: #e6f7ff; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #b3d8ff;">
+    <h4 style="margin: 0 0 5px 0; color: #0056b3;">Filtro 3 (Novo)</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label for="qtdFT3">Qtd Filtros </label>
+            <input type="number" id="qtdFT3" placeholder="0" min="0">
+        </div>
+        <div>
+            <label for="qtdPlacas3">Qtd Placas </label>
+            <input type="number" id="qtdPlacas3" placeholder="0" min="0">
+        </div>
+    </div>
+</div>
                     
                     <fieldset class="paletes-fieldset">
                         <legend>Lançamento de Paletes</legend>
@@ -156,11 +182,18 @@
         <div class="modal-content">
             <h3>Configurações de Pesos e Metas</h3>
             <div class="config-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                <div> <label>Peso por Filtro (kg)</label> <input type="number" id="pesoFiltro" step="0.1"> </div>
-                <div> <label>Peso por Placa (kg)</label> <input type="number" id="pesoPlaca" step="0.1"> </div>
-                <div> <label>Meta KG (Filtro)</label> <input type="number" id="metaKgFT" step="100"> </div>
-                <div> <label>Meta KG (Paletes)</label> <input type="number" id="metaKgPalete" step="100"> </div>
-            </div>
+    <h4 style="grid-column: 1 / -1; margin: 0; color: #333;">Filtros 1 e 2 (Antigos)</h4>
+    <div> <label>Peso Filtro (kg)</label> <input type="number" id="pesoFiltro" step="0.1"> </div>
+    <div> <label>Peso Placa (kg)</label> <input type="number" id="pesoPlaca" step="0.1"> </div>
+
+    <h4 style="grid-column: 1 / -1; margin-top: 10px; color: #333;">Filtro 3 (Novo)</h4>
+    <div> <label>Peso Filtro 3 (kg)</label> <input type="number" id="pesoFiltro3" step="0.1"> </div>
+    <div> <label>Peso Placa 3 (kg)</label> <input type="number" id="pesoPlaca3" step="0.1"> </div>
+
+    <h4 style="grid-column: 1 / -1; margin-top: 10px; color: #333;">Metas Globais</h4>
+    <div> <label>Meta KG (Filtro)</label> <input type="number" id="metaKgFT" step="100"> </div>
+    <div> <label>Meta KG (Paletes)</label> <input type="number" id="metaKgPalete" step="100"> </div>
+</div>
             <div class="modal-actions" style="display:flex; gap:1rem;">
                 <input type="password" id="configSenha" placeholder="Senha para salvar" style="flex-grow: 1;">
                 <button type="button" class="secondary" onclick="closeConfigModal(event, true)">Cancelar</button>
@@ -172,3 +205,6 @@
     <script type="module" src="js/massa.js"></script>
 </body>
 </html>
+
+
+
