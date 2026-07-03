@@ -104,7 +104,15 @@
         </section>
 
         <section id="historicoRetorno" style="margin-top: 30px;">
-            <h2>Registros de Retorno</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">Registros de Retorno</h2>
+                
+                <div style="background: #f1f5f9; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label for="filtroData" style="font-size: 0.85rem; font-weight: bold; margin-right: 5px; color: var(--primary-dark);">Filtrar por dia:</label>
+                    <input type="date" id="filtroData" style="padding: 3px; border: 1px solid #ccc; border-radius: 4px;" />
+                </div>
+            </div>
+
             <table id="tabelaRetorno">
                 <thead>
                     <tr>
@@ -119,7 +127,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                </tbody>
             </table>
         </section>
     </div>
@@ -144,10 +152,8 @@
     </div>
 
     <script>
-        // 1. Iniciar com a data de hoje automaticamente
         document.getElementById('data').valueAsDate = new Date();
 
-        // 2. Lógica das Taras (Salvas no navegador para não perder ao fechar a página)
         let taras = JSON.parse(localStorage.getItem('pesosTaras')) || {
             cacamba: 0, palete: 0, paleteira: 0, paleteira_eletrica: 0, mesa: 0
         };
@@ -174,11 +180,10 @@
             
             localStorage.setItem('pesosTaras', JSON.stringify(taras));
             fecharModalTaras();
-            calcularPesoLiquido(); // Recalcula se o usuário já tiver preenchido algo no formulário
+            calcularPesoLiquido(); 
             alert("Pesos atualizados com sucesso!");
         }
 
-        // 3. Função principal de cálculo do peso líquido
         function calcularPesoLiquido() {
             const tipo = document.getElementById('tipo').value;
             const transporte = document.getElementById('transporte').value;
@@ -189,34 +194,29 @@
                 return;
             }
 
-            // Descobrir o peso do veículo (Transporte)
             let pesoTransporte = 0;
             if (transporte === 'paleteira') pesoTransporte = taras.paleteira;
             else if (transporte === 'paleteira_eletrica') pesoTransporte = taras.paleteira_eletrica;
 
-            // Descobrir o peso do recipiente (Tipo)
             let pesoRecipiente = 0;
             if (tipo === 'retrabalho' || tipo === 'retalho') pesoRecipiente = taras.cacamba;
             else if (tipo === 'mesa') pesoRecipiente = taras.mesa;
             else if (tipo === 'palete') pesoRecipiente = taras.palete;
 
-            // Fórmula: Peso Bruto - (Veículo + Recipiente)
             const taraTotal = pesoTransporte + pesoRecipiente;
             let pesoLiquido = pesoBruto - taraTotal;
 
-            // Evitar valores negativos caso o operador digite errado
             if (pesoLiquido < 0) pesoLiquido = 0;
 
             document.getElementById('pesoLiquido').value = pesoLiquido.toFixed(2);
         }
 
-        // 4. Ação temporária de Salvar na Tabela (Integração Firebase será feita no JS principal posteriormente)
         document.getElementById('formRetorno').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const tbody = document.querySelector('#tabelaRetorno tbody');
             const dataRaw = document.getElementById('data').value;
-            const dataFormatada = dataRaw.split('-').reverse().join('/'); // Formata para DD/MM/YYYY
+            const dataFormatada = dataRaw.split('-').reverse().join('/');
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -230,11 +230,45 @@
                 <td style="color: green; font-weight: bold;">${document.getElementById('pesoLiquido').value}</td>
             `;
             
-            tbody.prepend(tr); // Adiciona no topo da tabela
+            tbody.prepend(tr);
             
             this.reset();
-            document.getElementById('data').valueAsDate = new Date(); // Mantém a data atual após resetar
+            document.getElementById('data').valueAsDate = new Date();
+
+            filtrarTabelaPorData();
         });
+
+        const filtroDataInput = document.getElementById('filtroData');
+
+        filtroDataInput.valueAsDate = new Date();
+
+        function filtrarTabelaPorData() {
+            const dataFiltroRaw = filtroDataInput.value;
+            const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
+
+            if (!dataFiltroRaw) {
+                linhas.forEach(linha => linha.style.display = '');
+                return;
+            }
+
+            const dataFiltroFormatada = dataFiltroRaw.split('-').reverse().join('/');
+
+            linhas.forEach(linha => {
+                const colunaData = linha.querySelector('td:first-child');
+                
+                if (colunaData) {
+                    if (colunaData.textContent === dataFiltroFormatada) {
+                        linha.style.display = '';
+                    } else {
+                        linha.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        filtroDataInput.addEventListener('change', filtrarTabelaPorData);
+
+        filtrarTabelaPorData();
     </script>
 </body>
 </html>
