@@ -31,6 +31,24 @@
             transition: transform 0.3s ease; padding: 0; box-shadow: none;
         }
         .btn-engrenagem:hover { transform: rotate(90deg); background: none;}
+
+        /* Estilos da nova barra de filtros */
+        .painel-filtros {
+            background: #f8fafc; padding: 15px; border-radius: 8px; 
+            border: 1px solid var(--border-color); margin-bottom: 20px; 
+            display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;
+        }
+        .painel-filtros .grupo-filtro {
+            flex: 1; min-width: 150px;
+        }
+        .painel-filtros label {
+            display: block; font-size: 0.85rem; font-weight: bold; 
+            margin-bottom: 5px; color: var(--primary-dark);
+        }
+        .painel-filtros input, .painel-filtros select {
+            width: 100%; padding: 8px; border: 1px solid #ccc; 
+            border-radius: 4px; font-family: 'Inter', sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -103,13 +121,37 @@
             </form>
         </section>
 
-        <section id="historicoRetorno" style="margin-top: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">Registros de Retorno</h2>
+        <section id="historicoRetorno" style="margin-top: 40px;">
+            <h2>Registros de Retorno</h2>
+            
+            <!-- PAINEL DE FILTROS AQUI -->
+            <div class="painel-filtros">
+                <div class="grupo-filtro">
+                    <label for="filtroData">Data:</label>
+                    <input type="date" id="filtroData" />
+                </div>
                 
-                <div style="background: #f1f5f9; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <label for="filtroData" style="font-size: 0.85rem; font-weight: bold; margin-right: 5px; color: var(--primary-dark);">Filtrar por dia:</label>
-                    <input type="date" id="filtroData" style="padding: 3px; border: 1px solid #ccc; border-radius: 4px;" />
+                <div class="grupo-filtro">
+                    <label for="filtroTurno">Turno:</label>
+                    <select id="filtroTurno">
+                        <option value="">Todos os Turnos</option>
+                        <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
+                        <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
+                        <option>Turno 2 (5x2)</option>
+                    </select>
+                </div>
+
+                <div class="grupo-filtro">
+                    <label for="filtroMaquina">Máquina:</label>
+                    <select id="filtroMaquina">
+                        <option value="">Todas as Máquinas</option>
+                        <option>Roller</option><option>Maq de prato</option>
+                        <option>Maq de xícara</option><option>Prensa</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <button type="button" class="secondary" onclick="limparFiltros()" style="margin: 0; padding: 8px 15px;">Limpar Filtros</button>
                 </div>
             </div>
 
@@ -235,29 +277,49 @@
             this.reset();
             document.getElementById('data').valueAsDate = new Date();
 
-            filtrarTabelaPorData();
+            // Roda os filtros novamente após um novo lançamento
+            aplicarFiltros();
         });
 
-        const filtroDataInput = document.getElementById('filtroData');
+        // ==========================================
+        // LÓGICA DE MÚLTIPLOS FILTROS (Data, Turno, Máquina)
+        // ==========================================
+        const filtroData = document.getElementById('filtroData');
+        const filtroTurno = document.getElementById('filtroTurno');
+        const filtroMaquina = document.getElementById('filtroMaquina');
 
-        filtroDataInput.valueAsDate = new Date();
+        // Inicializa o filtro de data com o dia de hoje
+        filtroData.valueAsDate = new Date();
 
-        function filtrarTabelaPorData() {
-            const dataFiltroRaw = filtroDataInput.value;
-            const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
-
-            if (!dataFiltroRaw) {
-                linhas.forEach(linha => linha.style.display = '');
-                return;
+        function aplicarFiltros() {
+            const dataFiltroRaw = filtroData.value;
+            const turnoSelecionado = filtroTurno.value;
+            const maquinaSelecionada = filtroMaquina.value;
+            
+            let dataFormatadaFiltro = "";
+            if (dataFiltroRaw) {
+                dataFormatadaFiltro = dataFiltroRaw.split('-').reverse().join('/');
             }
 
-            const dataFiltroFormatada = dataFiltroRaw.split('-').reverse().join('/');
+            const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
 
             linhas.forEach(linha => {
-                const colunaData = linha.querySelector('td:first-child');
+                const celulas = linha.querySelectorAll('td');
                 
-                if (colunaData) {
-                    if (colunaData.textContent === dataFiltroFormatada) {
+                // Garante que a linha tem dados antes de tentar ler
+                if (celulas.length > 0) {
+                    const dataTabela = celulas[0].textContent;
+                    const turnoTabela = celulas[1].textContent;
+                    const maquinaTabela = celulas[2].textContent;
+
+                    // Verifica se a linha bate com as condições. 
+                    // Se o filtro estiver vazio (ex: ""), consideramos como válido para mostrar tudo.
+                    const bateData = (dataFormatadaFiltro === "" || dataTabela === dataFormatadaFiltro);
+                    const bateTurno = (turnoSelecionado === "" || turnoTabela === turnoSelecionado);
+                    const bateMaquina = (maquinaSelecionada === "" || maquinaTabela === maquinaSelecionada);
+
+                    // Se a linha atender a TODOS os filtros selecionados, ela aparece
+                    if (bateData && bateTurno && bateMaquina) {
                         linha.style.display = '';
                     } else {
                         linha.style.display = 'none';
@@ -266,9 +328,21 @@
             });
         }
 
-        filtroDataInput.addEventListener('change', filtrarTabelaPorData);
+        // Função para limpar todos os campos de filtro e mostrar a tabela inteira (sem data)
+        function limparFiltros() {
+            filtroData.value = "";
+            filtroTurno.value = "";
+            filtroMaquina.value = "";
+            aplicarFiltros();
+        }
 
-        filtrarTabelaPorData();
+        // Escuta as mudanças nos 3 campos para filtrar a tabela em tempo real
+        filtroData.addEventListener('change', aplicarFiltros);
+        filtroTurno.addEventListener('change', aplicarFiltros);
+        filtroMaquina.addEventListener('change', aplicarFiltros);
+
+        // Executa o filtro de "Hoje" logo que a página carrega
+        aplicarFiltros();
     </script>
 </body>
 </html>
