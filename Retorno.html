@@ -32,7 +32,7 @@
         }
         .btn-engrenagem:hover { transform: rotate(90deg); background: none;}
 
-        /* Estilos da nova barra de filtros */
+        /* Estilos do painel de filtros */
         .painel-filtros {
             background: #f8fafc; padding: 15px; border-radius: 8px; 
             border: 1px solid var(--border-color); margin-bottom: 20px; 
@@ -49,6 +49,35 @@
             width: 100%; padding: 8px; border: 1px solid #ccc; 
             border-radius: 4px; font-family: 'Inter', sans-serif;
         }
+
+        /* Estilos para o Múltiplo Lançamento */
+        .secao-itens-multiplos {
+            background: #f1f5f9; padding: 15px; border-radius: 8px;
+            border: 1px solid #cbd5e1; margin-top: 15px;
+        }
+        .linha-dinamica {
+            display: grid; grid-template-columns: 2fr 2fr 1.5fr 1.5fr auto; 
+            gap: 10px; align-items: flex-end; margin-bottom: 10px;
+            background: white; padding: 10px; border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .linha-dinamica label {
+            display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #475569;
+        }
+        .linha-dinamica input, .linha-dinamica select {
+            width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;
+        }
+        .btn-remover {
+            background: #ef4444; color: white; border: none; padding: 7px 12px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; transition: background 0.2s;
+        }
+        .btn-remover:hover { background: #b91c1c; }
+        .btn-adicionar {
+            background: var(--primary); color: white; border: none; padding: 8px 15px;
+            border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;
+            transition: background 0.2s; margin-top: 5px;
+        }
+        .btn-adicionar:hover { background: var(--primary-dark); }
     </style>
 </head>
 <body>
@@ -89,33 +118,18 @@
                         <option>Stone</option><option>Faiança</option>
                     </select>
                 </div>
-                <div><label>Tipo</label>
-                    <select id="tipo" required onchange="calcularPesoLiquido()">
-                        <option value="">Selecione</option>
-                        <option value="palete">Palete</option>
-                        <option value="retrabalho">Retrabalho</option>
-                        <option value="retalho">Retalho</option>
-                        <option value="mesa">Mesa</option>
-                    </select>
-                </div>
-                <div><label>Transporte</label>
-                    <select id="transporte" required onchange="calcularPesoLiquido()">
-                        <option value="">Selecione</option>
-                        <option value="paleteira">Paleteira</option>
-                        <option value="paleteira_eletrica">Paleteira Elétrica</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Peso Bruto (KG)</label>
-                    <input type="number" id="pesoBruto" step="0.01" min="0" required oninput="calcularPesoLiquido()" />
-                </div>
-                <div>
-                    <label>Peso Líquido (KG)</label>
-                    <input type="number" id="pesoLiquido" step="0.01" readonly style="background-color: #e2e8f0; font-weight: bold; color: var(--primary-dark);" placeholder="Calculado auto." />
+
+                <div class="full secao-itens-multiplos">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary-dark); border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Itens para Lançamento</h3>
+                    
+                    <div id="container-linhas">
+                        </div>
+
+                    <button type="button" class="btn-adicionar" onclick="criarNovaLinha()">➕ Adicionar Outro Item</button>
                 </div>
                 
-                <div class="full" style="text-align:right;">
-                    <button type="button" class="secondary" onclick="document.getElementById('formRetorno').reset(); document.getElementById('data').valueAsDate = new Date();">Limpar</button>
+                <div class="full" style="text-align:right; margin-top: 15px;">
+                    <button type="button" class="secondary" onclick="limparFormularioCompleto()">Limpar Tudo</button>
                     <button type="submit">Lançar Retorno</button>
                 </div>
             </form>
@@ -124,7 +138,6 @@
         <section id="historicoRetorno" style="margin-top: 40px;">
             <h2>Registros de Retorno</h2>
             
-            <!-- PAINEL DE FILTROS AQUI -->
             <div class="painel-filtros">
                 <div class="grupo-filtro">
                     <label for="filtroData">Data:</label>
@@ -222,17 +235,79 @@
             
             localStorage.setItem('pesosTaras', JSON.stringify(taras));
             fecharModalTaras();
-            calcularPesoLiquido(); 
-            alert("Pesos atualizados com sucesso!");
+            
+            // Recalcula todas as linhas abertas na tela para atualizar com as novas taras
+            document.querySelectorAll('.linha-dinamica').forEach(linha => calcularPesoLiquidoRow(linha));
+            alert("Pesos de tara salvos e linhas atuais atualizadas!");
         }
 
-        function calcularPesoLiquido() {
-            const tipo = document.getElementById('tipo').value;
-            const transporte = document.getElementById('transporte').value;
-            const pesoBruto = parseFloat(document.getElementById('pesoBruto').value) || 0;
+        // ==========================================
+        // GERAÇÃO DE NOVAS LINHAS DINÂMICAS
+        // ==========================================
+        function criarNovaLinha() {
+            const container = document.getElementById('container-linhas');
+            const div = document.createElement('div');
+            div.className = 'linha-dinamica';
+            
+            div.innerHTML = `
+                <div>
+                    <label>Tipo</label>
+                    <select class="campo-tipo" required>
+                        <option value="">Selecione</option>
+                        <option value="palete">Palete</option>
+                        <option value="retrabalho">Retrabalho</option>
+                        <option value="retalho">Retalho</option>
+                        <option value="mesa">Mesa</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Transporte</label>
+                    <select class="campo-transporte" required>
+                        <option value="">Selecione</option>
+                        <option value="paleteira">Paleteira</option>
+                        <option value="paleteira_eletrica">Paleteira Elétrica</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Peso Bruto (KG)</label>
+                    <input type="number" class="campo-bruto" step="0.01" min="0" required />
+                </div>
+                <div>
+                    <label>Peso Líquido (KG)</label>
+                    <input type="number" class="campo-liquido" step="0.01" readonly style="background-color: #e2e8f0; font-weight: bold; color: var(--primary-dark);" placeholder="Auto" />
+                </div>
+                <div>
+                    <button type="button" class="btn-remover" title="Remover item">✕</button>
+                </div>
+            `;
+            
+            // Atribui os eventos de cálculo automático específicos para os elementos desta linha
+            div.querySelector('.campo-tipo').addEventListener('change', () => calcularPesoLiquidoRow(div));
+            div.querySelector('.campo-transporte').addEventListener('change', () => calcularPesoLiquidoRow(div));
+            div.querySelector('.campo-bruto').addEventListener('input', () => calcularPesoLiquidoRow(div));
+            
+            // Evento para remover a linha específica
+            div.querySelector('.btn-remover').addEventListener('click', function() {
+                const totalLinhas = document.querySelectorAll('.linha-dinamica').length;
+                if (totalLinhas > 1) {
+                    div.remove();
+                } else {
+                    alert("O lançamento precisa conter pelo menos um item!");
+                }
+            });
+
+            container.appendChild(div);
+        }
+
+        // Função que calcula o peso líquido de uma linha isolada
+        function calcularPesoLiquidoRow(linha) {
+            const tipo = linha.querySelector('.campo-tipo').value;
+            const transporte = linha.querySelector('.campo-transporte').value;
+            const pesoBruto = parseFloat(linha.querySelector('.campo-bruto').value) || 0;
+            const inputLiquido = linha.querySelector('.campo-liquido');
 
             if (!tipo || !transporte || pesoBruto <= 0) {
-                document.getElementById('pesoLiquido').value = '';
+                inputLiquido.value = '';
                 return;
             }
 
@@ -250,45 +325,79 @@
 
             if (pesoLiquido < 0) pesoLiquido = 0;
 
-            document.getElementById('pesoLiquido').value = pesoLiquido.toFixed(2);
+            inputLiquido.value = pesoLiquido.toFixed(2);
         }
 
+        // Inicializa a primeira linha vazia ao carregar o sistema
+        criarNovaLinha();
+
+        function limparFormularioCompleto() {
+            document.getElementById('formRetorno').reset();
+            document.getElementById('data').valueAsDate = new Date();
+            // Reseta a área de itens deixando apenas uma linha limpa
+            document.getElementById('container-linhas').innerHTML = '';
+            criarNovaLinha();
+        }
+
+        // ==========================================
+        // SUBMIT DO FORMULÁRIO (MÚLTIPLOS LANÇAMENTOS)
+        // ==========================================
         document.getElementById('formRetorno').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const tbody = document.querySelector('#tabelaRetorno tbody');
+            
+            // Coleta os cabeçalhos fixos comuns
             const dataRaw = document.getElementById('data').value;
             const dataFormatada = dataRaw.split('-').reverse().join('/');
+            const turno = document.getElementById('turno').value;
+            const maquina = document.getElementById('maquina').value;
+            const tipoMassa = document.getElementById('tipoMassa').value;
             
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${dataFormatada}</td>
-                <td>${document.getElementById('turno').value}</td>
-                <td>${document.getElementById('maquina').value}</td>
-                <td>${document.getElementById('tipoMassa').value}</td>
-                <td>${document.getElementById('tipo').options[document.getElementById('tipo').selectedIndex].text}</td>
-                <td>${document.getElementById('transporte').options[document.getElementById('transporte').selectedIndex].text}</td>
-                <td><strong>${document.getElementById('pesoBruto').value}</strong></td>
-                <td style="color: green; font-weight: bold;">${document.getElementById('pesoLiquido').value}</td>
-            `;
+            // Seleciona todas as linhas de itens abertas
+            const linhasItens = document.querySelectorAll('.linha-dinamica');
             
-            tbody.prepend(tr);
+            // Percorre cada linha gerando um registro individual na tabela
+            linhasItens.forEach(linha => {
+                const selectTipo = linha.querySelector('.campo-tipo');
+                const selectTransporte = linha.querySelector('.campo-transporte');
+                const pesoBruto = linha.querySelector('.campo-bruto').value;
+                const pesoLiquido = linha.querySelector('.campo-liquido').value;
+                
+                const tipoTexto = selectTipo.options[selectTipo.selectedIndex].text;
+                const transporteTexto = selectTransporte.options[selectTransporte.selectedIndex].text;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dataFormatada}</td>
+                    <td>${turno}</td>
+                    <td>${maquina}</td>
+                    <td>${tipoMassa}</td>
+                    <td>${tipoTexto}</td>
+                    <td>${transporteTexto}</td>
+                    <td><strong>${pesoBruto}</strong></td>
+                    <td style="color: green; font-weight: bold;">${pesoLiquido}</td>
+                `;
+                
+                tbody.prepend(tr); // Insere no topo do histórico
+            });
             
-            this.reset();
-            document.getElementById('data').valueAsDate = new Date();
+            // Reseta os campos de itens mantendo as definições do cabeçalho superiores (ou limpa se preferir)
+            // Aqui vamos limpar os itens para uma nova rodada, mas manter Data/Turno/Máquina caso queiram lançar de novo.
+            document.getElementById('container-linhas').innerHTML = '';
+            criarNovaLinha();
 
-            // Roda os filtros novamente após um novo lançamento
+            // Roda os filtros para manter a visualização atualizada do dia
             aplicarFiltros();
         });
 
         // ==========================================
-        // LÓGICA DE MÚLTIPLOS FILTROS (Data, Turno, Máquina)
+        // LÓGICA DE FILTROS (Data, Turno, Máquina)
         // ==========================================
         const filtroData = document.getElementById('filtroData');
         const filtroTurno = document.getElementById('filtroTurno');
         const filtroMaquina = document.getElementById('filtroMaquina');
 
-        // Inicializa o filtro de data com o dia de hoje
         filtroData.valueAsDate = new Date();
 
         function aplicarFiltros() {
@@ -304,21 +413,17 @@
             const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
 
             linhas.forEach(linha => {
-                const celulas = linha.querySelectorAll('td');
+                const celulas = inlineCells = linha.querySelectorAll('td');
                 
-                // Garante que a linha tem dados antes de tentar ler
                 if (celulas.length > 0) {
                     const dataTabela = celulas[0].textContent;
                     const turnoTabela = celulas[1].textContent;
                     const maquinaTabela = celulas[2].textContent;
 
-                    // Verifica se a linha bate com as condições. 
-                    // Se o filtro estiver vazio (ex: ""), consideramos como válido para mostrar tudo.
                     const bateData = (dataFormatadaFiltro === "" || dataTabela === dataFormatadaFiltro);
                     const bateTurno = (turnoSelecionado === "" || turnoTabela === turnoSelecionado);
                     const bateMaquina = (maquinaSelecionada === "" || maquinaTabela === maquinaSelecionada);
 
-                    // Se a linha atender a TODOS os filtros selecionados, ela aparece
                     if (bateData && bateTurno && bateMaquina) {
                         linha.style.display = '';
                     } else {
@@ -328,7 +433,6 @@
             });
         }
 
-        // Função para limpar todos os campos de filtro e mostrar a tabela inteira (sem data)
         function limparFiltros() {
             filtroData.value = "";
             filtroTurno.value = "";
@@ -336,12 +440,10 @@
             aplicarFiltros();
         }
 
-        // Escuta as mudanças nos 3 campos para filtrar a tabela em tempo real
         filtroData.addEventListener('change', aplicarFiltros);
         filtroTurno.addEventListener('change', aplicarFiltros);
         filtroMaquina.addEventListener('change', aplicarFiltros);
 
-        // Executa o filtro de "Hoje" logo que a página carrega
         aplicarFiltros();
     </script>
 </body>
