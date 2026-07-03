@@ -78,6 +78,36 @@
             transition: background 0.2s; margin-top: 5px;
         }
         .btn-adicionar:hover { background: var(--primary-dark); }
+
+        /* Estilos do Sistema de Abas e Dashboard */
+        .abas-sistema {
+            display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;
+        }
+        .abas-sistema button {
+            background: transparent; border: none; padding: 10px 20px; font-weight: 600; font-size: 1rem;
+            color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+        .abas-sistema button:hover {
+            color: var(--primary);
+        }
+        .abas-sistema button.aba-ativa {
+            color: var(--primary-dark); border-bottom: 3px solid var(--primary);
+        }
+        
+        .dash-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;
+        }
+        .dash-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;
+            text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .dash-card h3 {
+            margin: 0 0 10px 0; font-size: 0.9rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .dash-card .valor {
+            font-size: 2rem; font-weight: 700; color: var(--primary-dark);
+        }
     </style>
 </head>
 <body>
@@ -136,7 +166,7 @@
         </section>
 
         <section id="historicoRetorno" style="margin-top: 40px;">
-            <h2>Registros de Retorno</h2>
+            <h2>Análise e Registos</h2>
             
             <div class="painel-filtros">
                 <div class="grupo-filtro">
@@ -168,22 +198,46 @@
                 </div>
             </div>
 
-            <table id="tabelaRetorno">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Turno</th>
-                        <th>Máquina</th>
-                        <th>Massa</th>
-                        <th>Tipo</th>
-                        <th>Transporte</th>
-                        <th>Bruto (KG)</th>
-                        <th>Líquido (KG)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <div class="abas-sistema">
+                <button type="button" id="btn-aba-tabela" class="aba-ativa" onclick="alternarAba('tabela')">📋 Tabela de Dados</button>
+                <button type="button" id="btn-aba-dash" onclick="alternarAba('dash')">📊 Dashboard</button>
+            </div>
+
+            <div id="conteudo-tabela">
+                <table id="tabelaRetorno">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Turno</th>
+                            <th>Máquina</th>
+                            <th>Massa</th>
+                            <th>Tipo</th>
+                            <th>Transporte</th>
+                            <th>Bruto (KG)</th>
+                            <th>Líquido (KG)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="conteudo-dash" style="display: none;">
+                <div class="dash-cards">
+                    <div class="dash-card">
+                        <h3>Lançamentos</h3>
+                        <div class="valor" id="dash-qtd">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Peso Bruto Total</h3>
+                        <div class="valor" id="dash-bruto">0.00 <span style="font-size: 0.5em; color: #94a3b8;">KG</span></div>
+                    </div>
+                    <div class="dash-card" style="border-bottom: 4px solid var(--success);">
+                        <h3>Peso Líquido Total</h3>
+                        <div class="valor" style="color: var(--success);" id="dash-liquido">0.00 <span style="font-size: 0.5em; color: #94a3b8;">KG</span></div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 
@@ -236,9 +290,8 @@
             localStorage.setItem('pesosTaras', JSON.stringify(taras));
             fecharModalTaras();
             
-            // Recalcula todas as linhas abertas na tela para atualizar com as novas taras
             document.querySelectorAll('.linha-dinamica').forEach(linha => calcularPesoLiquidoRow(linha));
-            alert("Pesos de tara salvos e linhas atuais atualizadas!");
+            alert("Pesos de tara salvos e linhas actuais actualizadas!");
         }
 
         // ==========================================
@@ -281,25 +334,22 @@
                 </div>
             `;
             
-            // Atribui os eventos de cálculo automático específicos para os elementos desta linha
             div.querySelector('.campo-tipo').addEventListener('change', () => calcularPesoLiquidoRow(div));
             div.querySelector('.campo-transporte').addEventListener('change', () => calcularPesoLiquidoRow(div));
             div.querySelector('.campo-bruto').addEventListener('input', () => calcularPesoLiquidoRow(div));
             
-            // Evento para remover a linha específica
             div.querySelector('.btn-remover').addEventListener('click', function() {
                 const totalLinhas = document.querySelectorAll('.linha-dinamica').length;
                 if (totalLinhas > 1) {
                     div.remove();
                 } else {
-                    alert("O lançamento precisa conter pelo menos um item!");
+                    alert("O lançamento precisa de conter pelo menos um item!");
                 }
             });
 
             container.appendChild(div);
         }
 
-        // Função que calcula o peso líquido de uma linha isolada
         function calcularPesoLiquidoRow(linha) {
             const tipo = linha.querySelector('.campo-tipo').value;
             const transporte = linha.querySelector('.campo-transporte').value;
@@ -328,13 +378,11 @@
             inputLiquido.value = pesoLiquido.toFixed(2);
         }
 
-        // Inicializa a primeira linha vazia ao carregar o sistema
         criarNovaLinha();
 
         function limparFormularioCompleto() {
             document.getElementById('formRetorno').reset();
             document.getElementById('data').valueAsDate = new Date();
-            // Reseta a área de itens deixando apenas uma linha limpa
             document.getElementById('container-linhas').innerHTML = '';
             criarNovaLinha();
         }
@@ -346,18 +394,14 @@
             e.preventDefault();
             
             const tbody = document.querySelector('#tabelaRetorno tbody');
-            
-            // Coleta os cabeçalhos fixos comuns
             const dataRaw = document.getElementById('data').value;
             const dataFormatada = dataRaw.split('-').reverse().join('/');
             const turno = document.getElementById('turno').value;
             const maquina = document.getElementById('maquina').value;
             const tipoMassa = document.getElementById('tipoMassa').value;
             
-            // Seleciona todas as linhas de itens abertas
             const linhasItens = document.querySelectorAll('.linha-dinamica');
             
-            // Percorre cada linha gerando um registro individual na tabela
             linhasItens.forEach(linha => {
                 const selectTipo = linha.querySelector('.campo-tipo');
                 const selectTransporte = linha.querySelector('.campo-transporte');
@@ -379,20 +423,34 @@
                     <td style="color: green; font-weight: bold;">${pesoLiquido}</td>
                 `;
                 
-                tbody.prepend(tr); // Insere no topo do histórico
+                tbody.prepend(tr); 
             });
             
-            // Reseta os campos de itens mantendo as definições do cabeçalho superiores (ou limpa se preferir)
-            // Aqui vamos limpar os itens para uma nova rodada, mas manter Data/Turno/Máquina caso queiram lançar de novo.
             document.getElementById('container-linhas').innerHTML = '';
             criarNovaLinha();
 
-            // Roda os filtros para manter a visualização atualizada do dia
             aplicarFiltros();
         });
 
         // ==========================================
-        // LÓGICA DE FILTROS (Data, Turno, Máquina)
+        // ALTERNÂNCIA DE ABAS (TABELA vs DASHBOARD)
+        // ==========================================
+        function alternarAba(aba) {
+            if(aba === 'tabela') {
+                document.getElementById('conteudo-tabela').style.display = 'block';
+                document.getElementById('conteudo-dash').style.display = 'none';
+                document.getElementById('btn-aba-tabela').classList.add('aba-ativa');
+                document.getElementById('btn-aba-dash').classList.remove('aba-ativa');
+            } else if(aba === 'dash') {
+                document.getElementById('conteudo-tabela').style.display = 'none';
+                document.getElementById('conteudo-dash').style.display = 'block';
+                document.getElementById('btn-aba-tabela').classList.remove('aba-ativa');
+                document.getElementById('btn-aba-dash').classList.add('aba-ativa');
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE FILTROS E CÁLCULO DO DASHBOARD
         // ==========================================
         const filtroData = document.getElementById('filtroData');
         const filtroTurno = document.getElementById('filtroTurno');
@@ -411,9 +469,14 @@
             }
 
             const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
+            
+            // Variáveis para somar os dados do Dashboard
+            let somaBruto = 0;
+            let somaLiquido = 0;
+            let totalLancamentos = 0;
 
             linhas.forEach(linha => {
-                const celulas = inlineCells = linha.querySelectorAll('td');
+                const celulas = linha.querySelectorAll('td');
                 
                 if (celulas.length > 0) {
                     const dataTabela = celulas[0].textContent;
@@ -426,11 +489,25 @@
 
                     if (bateData && bateTurno && bateMaquina) {
                         linha.style.display = '';
+                        
+                        // Extrai os valores numéricos das colunas de peso e soma
+                        const valBruto = parseFloat(celulas[6].textContent) || 0;
+                        const valLiquido = parseFloat(celulas[7].textContent) || 0;
+                        
+                        somaBruto += valBruto;
+                        somaLiquido += valLiquido;
+                        totalLancamentos++;
+
                     } else {
                         linha.style.display = 'none';
                     }
                 }
             });
+
+            // Atualiza os cartões do Dashboard com os valores somados
+            document.getElementById('dash-qtd').textContent = totalLancamentos;
+            document.getElementById('dash-bruto').innerHTML = `${somaBruto.toFixed(2)} <span style="font-size: 0.5em; color: #94a3b8;">KG</span>`;
+            document.getElementById('dash-liquido').innerHTML = `${somaLiquido.toFixed(2)} <span style="font-size: 0.5em; color: #94a3b8;">KG</span>`;
         }
 
         function limparFiltros() {
@@ -444,6 +521,7 @@
         filtroTurno.addEventListener('change', aplicarFiltros);
         filtroMaquina.addEventListener('change', aplicarFiltros);
 
+        // Dispara ao iniciar a página
         aplicarFiltros();
     </script>
 </body>
