@@ -1,9 +1,10 @@
 // MUDANÇA 1: Alteramos para v2 para forçar atualização
-const CACHE_NAME = 'producao-app-v11.3';
+const CACHE_NAME = 'producao-app-v11.8';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './Retorno.html',
   './Massa.html',
   './css/global.css',
   './css/massa.css',
