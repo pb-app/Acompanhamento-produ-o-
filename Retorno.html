@@ -77,7 +77,6 @@
         }
         .btn-adicionar:hover { background: var(--primary-dark); }
 
-        /* Botão de Excluir do Histórico */
         .btn-excluir-registro {
             background: #ef4444; color: white; border: none; padding: 5px 10px;
             border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
@@ -190,9 +189,14 @@
             
             <div class="painel-filtros">
                 <div class="grupo-filtro">
-                    <label for="filtroData">Data:</label>
-                    <input type="date" id="filtroData" />
+                    <label for="filtroDataInicio">Data Inicial:</label>
+                    <input type="date" id="filtroDataInicio" />
                 </div>
+                <div class="grupo-filtro">
+                    <label for="filtroDataFim">Data Final:</label>
+                    <input type="date" id="filtroDataFim" />
+                </div>
+
                 <div class="grupo-filtro">
                     <label for="filtroTurno">Turno:</label>
                     <select id="filtroTurno">
@@ -300,15 +304,15 @@
 
     <script>
         // ------------------------------------------------------------------
-        // 1. INICIALIZAÇÃO DO FIREBASE (COLOQUE SUAS CHAVES AQUI)
+        // 1. INICIALIZAÇÃO DO FIREBASE
         // ------------------------------------------------------------------
         const firebaseConfig = {
-                apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
-                authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
-                projectId: "acompanhamento-de-produc-b68b0",
-                storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
-                messagingSenderId: "891709449679",
-                appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
+            apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
+            authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
+            projectId: "acompanhamento-de-produc-b68b0",
+            storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
+            messagingSenderId: "891709449679",
+            appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -491,7 +495,7 @@
             
             querySnapshot.forEach((doc) => {
                 const registro = doc.data();
-                const docId = doc.id; // Pegando o ID único gerado pelo Firebase
+                const docId = doc.id; 
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -503,7 +507,6 @@
                     <td>${registro.transporte || ''}</td>
                     <td><strong>${Number(registro.pesoBruto).toFixed(2)}</strong></td>
                     <td style="color: green; font-weight: bold;">${Number(registro.pesoLiquido).toFixed(2)}</td>
-                    
                     <td>
                         <button class="btn-excluir-registro" onclick="excluirRegistro('${docId}')" title="Excluir lançamento">Excluir</button>
                     </td>
@@ -516,15 +519,9 @@
             console.error("Erro ao ler os dados do Firebase: ", error);
         });
 
-        // ------------------------------------------------------------------
-        // 5.1 FUNÇÃO PARA EXCLUIR REGISTRO DO FIREBASE
-        // ------------------------------------------------------------------
         function excluirRegistro(id) {
-            // Pede confirmação antes de apagar
             if(confirm("Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.")) {
-                db.collection('retornos').doc(id).delete().then(() => {
-                    // O item apagado sumirá da tabela graças ao onSnapshot, e o Dashboard será recalculado!
-                }).catch((error) => {
+                db.collection('retornos').doc(id).delete().catch((error) => {
                     console.error("Erro ao excluir documento: ", error);
                     alert("Erro ao tentar excluir. Verifique sua conexão.");
                 });
@@ -549,25 +546,27 @@
         }
 
         // ------------------------------------------------------------------
-        // 7. LÓGICA ATUALIZADA DOS 5 FILTROS E DASHBOARD
+        // 7. LÓGICA ATUALIZADA DE FILTROS (COM PERÍODO) E DASHBOARD
         // ------------------------------------------------------------------
-        const filtroData = document.getElementById('filtroData');
+        const filtroDataInicio = document.getElementById('filtroDataInicio');
+        const filtroDataFim = document.getElementById('filtroDataFim');
         const filtroTurno = document.getElementById('filtroTurno');
         const filtroMaquina = document.getElementById('filtroMaquina');
         const filtroTipoMassa = document.getElementById('filtroTipoMassa');
         const filtroTipo = document.getElementById('filtroTipo');
 
-        filtroData.valueAsDate = new Date();
+        // Por padrão, ambos os filtros de data começam no dia atual
+        filtroDataInicio.valueAsDate = new Date();
+        filtroDataFim.valueAsDate = new Date();
 
         function aplicarFiltros() {
-            const dataFiltroRaw = filtroData.value;
+            const dataInicioRaw = filtroDataInicio.value; // YYYY-MM-DD
+            const dataFimRaw = filtroDataFim.value;       // YYYY-MM-DD
+            
             const turnoSelecionado = filtroTurno.value;
             const maquinaSelecionada = filtroMaquina.value;
             const massaSelecionada = filtroTipoMassa.value;
             const tipoSelecionado = filtroTipo.value;
-            
-            let dataFormatadaFiltro = "";
-            if (dataFiltroRaw) dataFormatadaFiltro = dataFiltroRaw.split('-').reverse().join('/');
 
             const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
             
@@ -578,13 +577,24 @@
             linhas.forEach(linha => {
                 const celulas = linha.querySelectorAll('td');
                 if (celulas.length > 0) {
-                    const dataTabela = celulas[0].textContent;
+                    const dataTabela = celulas[0].textContent; // DD/MM/YYYY
                     const turnoTabela = celulas[1].textContent;
                     const maquinaTabela = celulas[2].textContent;
                     const massaTabela = celulas[3].textContent;
                     const tipoTabela = celulas[4].textContent;
 
-                    const bateData = (dataFormatadaFiltro === "" || dataTabela === dataFormatadaFiltro);
+                    // Converte a data da tabela (DD/MM/YYYY) para ISO (YYYY-MM-DD) para comparar corretamente
+                    const partesData = dataTabela.split('/');
+                    let dataTabelaIso = "";
+                    if(partesData.length === 3) {
+                        dataTabelaIso = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
+                    }
+
+                    // Verifica se a data da linha está dentro do período selecionado
+                    let bateData = true;
+                    if (dataInicioRaw && dataTabelaIso < dataInicioRaw) bateData = false;
+                    if (dataFimRaw && dataTabelaIso > dataFimRaw) bateData = false;
+
                     const bateTurno = (turnoSelecionado === "" || turnoTabela === turnoSelecionado);
                     const bateMaquina = (maquinaSelecionada === "" || maquinaTabela === maquinaSelecionada);
                     const bateMassa = (massaSelecionada === "" || massaTabela === massaSelecionada);
@@ -607,7 +617,9 @@
         }
 
         function limparFiltros() {
-            filtroData.value = "";
+            // Ao limpar, podemos deixar as datas vazias para ver todo o histórico
+            filtroDataInicio.value = "";
+            filtroDataFim.value = "";
             filtroTurno.value = "";
             filtroMaquina.value = "";
             filtroTipoMassa.value = "";
@@ -615,7 +627,8 @@
             aplicarFiltros();
         }
 
-        filtroData.addEventListener('change', aplicarFiltros);
+        filtroDataInicio.addEventListener('change', aplicarFiltros);
+        filtroDataFim.addEventListener('change', aplicarFiltros);
         filtroTurno.addEventListener('change', aplicarFiltros);
         filtroMaquina.addEventListener('change', aplicarFiltros);
         filtroTipoMassa.addEventListener('change', aplicarFiltros);
