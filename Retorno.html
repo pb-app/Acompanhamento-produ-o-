@@ -32,14 +32,13 @@
         }
         .btn-engrenagem:hover { transform: rotate(90deg); background: none;}
 
-        /* Estilos do painel de filtros */
         .painel-filtros {
             background: #f8fafc; padding: 15px; border-radius: 8px; 
             border: 1px solid var(--border-color); margin-bottom: 20px; 
             display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;
         }
         .painel-filtros .grupo-filtro {
-            flex: 1; min-width: 150px;
+            flex: 1; min-width: 130px;
         }
         .painel-filtros label {
             display: block; font-size: 0.85rem; font-weight: bold; 
@@ -50,7 +49,6 @@
             border-radius: 4px; font-family: 'Inter', sans-serif;
         }
 
-        /* Estilos para o Múltiplo Lançamento */
         .secao-itens-multiplos {
             background: #f1f5f9; padding: 15px; border-radius: 8px;
             border: 1px solid #cbd5e1; margin-top: 15px;
@@ -79,7 +77,6 @@
         }
         .btn-adicionar:hover { background: var(--primary-dark); }
 
-        /* Estilos do Sistema de Abas e Dashboard */
         .abas-sistema {
             display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;
         }
@@ -108,9 +105,26 @@
         .dash-card .valor {
             font-size: 2rem; font-weight: 700; color: var(--primary-dark);
         }
+        
+        /* Loading Overlay durante salvamento */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; display: none;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-weight: bold; color: var(--primary-dark);">Sincronizando com o Firebase...</p>
+    </div>
+
     <header><h1>Acompanhamento de Produção</h1></header>
 
     <div class="container">
@@ -140,7 +154,6 @@
                         <option value="">Selecione</option>
                         <option>Roller</option><option>Maq de prato</option>
                         <option>Maq de xícara</option><option>Prensa</option>
-                        <option>Forno</option>
                     </select>
                 </div>
                 <div><label>Tipo de Massa</label>
@@ -152,10 +165,7 @@
 
                 <div class="full secao-itens-multiplos">
                     <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; color: var(--primary-dark); border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;">Itens para Lançamento</h3>
-                    
-                    <div id="container-linhas">
-                        </div>
-
+                    <div id="container-linhas"></div>
                     <button type="button" class="btn-adicionar" onclick="criarNovaLinha()">➕ Adicionar Outro Item</button>
                 </div>
                 
@@ -167,34 +177,47 @@
         </section>
 
         <section id="historicoRetorno" style="margin-top: 40px;">
-            <h2>Análise e Registos</h2>
+            <h2>Análise e Registros</h2>
             
             <div class="painel-filtros">
                 <div class="grupo-filtro">
                     <label for="filtroData">Data:</label>
                     <input type="date" id="filtroData" />
                 </div>
-                
                 <div class="grupo-filtro">
                     <label for="filtroTurno">Turno:</label>
                     <select id="filtroTurno">
-                        <option value="">Todos os Turnos</option>
+                        <option value="">Todos</option>
                         <option>Comercial</option><option>Turno 1 (6x2)</option><option>Turno 2 (6x2)</option>
                         <option>Turno 3 (6x2)</option><option>Turno 4 (6x2)</option><option>Turno 1 (5x2)</option>
                         <option>Turno 2 (5x2)</option>
                     </select>
                 </div>
-
                 <div class="grupo-filtro">
                     <label for="filtroMaquina">Máquina:</label>
                     <select id="filtroMaquina">
-                        <option value="">Todas as Máquinas</option>
+                        <option value="">Todas</option>
                         <option>Roller</option><option>Maq de prato</option>
                         <option>Maq de xícara</option><option>Prensa</option>
-                        <option>Forno</option>
                     </select>
                 </div>
-                
+                <div class="grupo-filtro">
+                    <label for="filtroTipoMassa">Massa:</label>
+                    <select id="filtroTipoMassa">
+                        <option value="">Todas</option>
+                        <option>Stone</option><option>Faiança</option>
+                    </select>
+                </div>
+                <div class="grupo-filtro">
+                    <label for="filtroTipo">Tipo:</label>
+                    <select id="filtroTipo">
+                        <option value="">Todos</option>
+                        <option value="Palete">Palete</option>
+                        <option value="Retrabalho">Retrabalho</option>
+                        <option value="Retalho">Retalho</option>
+                        <option value="Mesa">Mesa</option>
+                    </select>
+                </div>
                 <div>
                     <button type="button" class="secondary" onclick="limparFiltros()" style="margin: 0; padding: 8px 15px;">Limpar Filtros</button>
                 </div>
@@ -262,7 +285,28 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <script>
+        // ------------------------------------------------------------------
+        // 1. INICIALIZAÇÃO DO FIREBASE (COLOQUE SUAS CHAVES DO FIREBASE AQUI)
+        // ------------------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_DOMINIO.firebaseapp.com",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_BUCKET.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ------------------------------------------------------------------
+        // 2. CONFIGURAÇÕES INICIAIS DA TELA E TARAS
+        // ------------------------------------------------------------------
         document.getElementById('data').valueAsDate = new Date();
 
         let taras = JSON.parse(localStorage.getItem('pesosTaras')) || {
@@ -293,12 +337,12 @@
             fecharModalTaras();
             
             document.querySelectorAll('.linha-dinamica').forEach(linha => calcularPesoLiquidoRow(linha));
-            alert("Pesos de tara salvos e linhas actuais actualizadas!");
+            alert("Pesos de tara salvos e linhas atualizadas!");
         }
 
-        // ==========================================
-        // GERAÇÃO DE NOVAS LINHAS DINÂMICAS
-        // ==========================================
+        // ------------------------------------------------------------------
+        // 3. LÓGICA DE LINHAS MÚLTIPLAS
+        // ------------------------------------------------------------------
         function criarNovaLinha() {
             const container = document.getElementById('container-linhas');
             const div = document.createElement('div');
@@ -309,18 +353,18 @@
                     <label>Tipo</label>
                     <select class="campo-tipo" required>
                         <option value="">Selecione</option>
-                        <option value="palete">Palete</option>
-                        <option value="retrabalho">Retrabalho</option>
-                        <option value="retalho">Retalho</option>
-                        <option value="mesa">Mesa</option>
+                        <option value="Palete">Palete</option>
+                        <option value="Retrabalho">Retrabalho</option>
+                        <option value="Retalho">Retalho</option>
+                        <option value="Mesa">Mesa</option>
                     </select>
                 </div>
                 <div>
                     <label>Transporte</label>
                     <select class="campo-transporte" required>
                         <option value="">Selecione</option>
-                        <option value="paleteira">Paleteira</option>
-                        <option value="paleteira_eletrica">Paleteira Elétrica</option>
+                        <option value="Paleteira">Paleteira</option>
+                        <option value="Paleteira Elétrica">Paleteira Elétrica</option>
                     </select>
                 </div>
                 <div>
@@ -341,11 +385,10 @@
             div.querySelector('.campo-bruto').addEventListener('input', () => calcularPesoLiquidoRow(div));
             
             div.querySelector('.btn-remover').addEventListener('click', function() {
-                const totalLinhas = document.querySelectorAll('.linha-dinamica').length;
-                if (totalLinhas > 1) {
+                if (document.querySelectorAll('.linha-dinamica').length > 1) {
                     div.remove();
                 } else {
-                    alert("O lançamento precisa de conter pelo menos um item!");
+                    alert("O lançamento precisa conter pelo menos um item!");
                 }
             });
 
@@ -363,21 +406,11 @@
                 return;
             }
 
-            let pesoTransporte = 0;
-            if (transporte === 'paleteira') pesoTransporte = taras.paleteira;
-            else if (transporte === 'paleteira_eletrica') pesoTransporte = taras.paleteira_eletrica;
+            let pesoTransporte = (transporte === 'Paleteira') ? taras.paleteira : (transporte === 'Paleteira Elétrica' ? taras.paleteira_eletrica : 0);
+            let pesoRecipiente = (tipo === 'Retrabalho' || tipo === 'Retalho') ? taras.cacamba : (tipo === 'Mesa' ? taras.mesa : (tipo === 'Palete' ? taras.palete : 0));
 
-            let pesoRecipiente = 0;
-            if (tipo === 'retrabalho' || tipo === 'retalho') pesoRecipiente = taras.cacamba;
-            else if (tipo === 'mesa') pesoRecipiente = taras.mesa;
-            else if (tipo === 'palete') pesoRecipiente = taras.palete;
-
-            const taraTotal = pesoTransporte + pesoRecipiente;
-            let pesoLiquido = pesoBruto - taraTotal;
-
-            if (pesoLiquido < 0) pesoLiquido = 0;
-
-            inputLiquido.value = pesoLiquido.toFixed(2);
+            let pesoLiquido = pesoBruto - (pesoTransporte + pesoRecipiente);
+            inputLiquido.value = (pesoLiquido < 0 ? 0 : pesoLiquido).toFixed(2);
         }
 
         criarNovaLinha();
@@ -389,13 +422,15 @@
             criarNovaLinha();
         }
 
-        // ==========================================
-        // SUBMIT DO FORMULÁRIO (MÚLTIPLOS LANÇAMENTOS)
-        // ==========================================
+        // ------------------------------------------------------------------
+        // 4. SALVANDO NO FIREBASE (EM LOTE)
+        // ------------------------------------------------------------------
         document.getElementById('formRetorno').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const tbody = document.querySelector('#tabelaRetorno tbody');
+            // Exibe a tela de carregamento
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
             const dataRaw = document.getElementById('data').value;
             const dataFormatada = dataRaw.split('-').reverse().join('/');
             const turno = document.getElementById('turno').value;
@@ -403,40 +438,77 @@
             const tipoMassa = document.getElementById('tipoMassa').value;
             
             const linhasItens = document.querySelectorAll('.linha-dinamica');
+            const batch = db.batch(); // Inicia um lote de gravação do Firebase
             
             linhasItens.forEach(linha => {
-                const selectTipo = linha.querySelector('.campo-tipo');
-                const selectTransporte = linha.querySelector('.campo-transporte');
-                const pesoBruto = linha.querySelector('.campo-bruto').value;
-                const pesoLiquido = linha.querySelector('.campo-liquido').value;
+                const tipo = linha.querySelector('.campo-tipo').value;
+                const transporte = linha.querySelector('.campo-transporte').value;
+                const pesoBruto = parseFloat(linha.querySelector('.campo-bruto').value);
+                const pesoLiquido = parseFloat(linha.querySelector('.campo-liquido').value);
                 
-                const tipoTexto = selectTipo.options[selectTipo.selectedIndex].text;
-                const transporteTexto = selectTransporte.options[selectTransporte.selectedIndex].text;
+                // Cria uma nova referência de documento com ID automático
+                const docRef = db.collection('retornos').doc();
+                
+                batch.set(docRef, {
+                    data: dataFormatada,
+                    data_iso: dataRaw, // Guarda o YYYY-MM-DD para facilitar filtros no banco depois
+                    turno: turno,
+                    maquina: maquina,
+                    tipoMassa: tipoMassa,
+                    tipo: tipo,
+                    transporte: transporte,
+                    pesoBruto: pesoBruto,
+                    pesoLiquido: pesoLiquido,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            
+            // Dispara o lote todo de uma vez para o banco
+            batch.commit().then(() => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('container-linhas').innerHTML = '';
+                criarNovaLinha();
+                // O onSnapshot logo abaixo se encarregará de atualizar a tabela.
+            }).catch((error) => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error("Erro ao salvar no Firebase: ", error);
+                alert("Erro ao salvar os lançamentos. Verifique o console.");
+            });
+        });
+
+        // ------------------------------------------------------------------
+        // 5. ESCUTANDO O FIREBASE EM TEMPO REAL (LEITURA)
+        // ------------------------------------------------------------------
+        db.collection('retornos').orderBy('timestamp', 'desc').onSnapshot((querySnapshot) => {
+            const tbody = document.querySelector('#tabelaRetorno tbody');
+            tbody.innerHTML = ''; // Limpa a tabela atual
+            
+            querySnapshot.forEach((doc) => {
+                const registro = doc.data();
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${dataFormatada}</td>
-                    <td>${turno}</td>
-                    <td>${maquina}</td>
-                    <td>${tipoMassa}</td>
-                    <td>${tipoTexto}</td>
-                    <td>${transporteTexto}</td>
-                    <td><strong>${pesoBruto}</strong></td>
-                    <td style="color: green; font-weight: bold;">${pesoLiquido}</td>
+                    <td>${registro.data || ''}</td>
+                    <td>${registro.turno || ''}</td>
+                    <td>${registro.maquina || ''}</td>
+                    <td>${registro.tipoMassa || ''}</td>
+                    <td>${registro.tipo || ''}</td>
+                    <td>${registro.transporte || ''}</td>
+                    <td><strong>${Number(registro.pesoBruto).toFixed(2)}</strong></td>
+                    <td style="color: green; font-weight: bold;">${Number(registro.pesoLiquido).toFixed(2)}</td>
                 `;
-                
-                tbody.prepend(tr); 
+                tbody.appendChild(tr);
             });
             
-            document.getElementById('container-linhas').innerHTML = '';
-            criarNovaLinha();
-
+            // Como a tabela foi recriada, aplicamos os filtros nela
             aplicarFiltros();
+        }, (error) => {
+            console.error("Erro ao ler os dados do Firebase: ", error);
         });
 
-        // ==========================================
-        // ALTERNÂNCIA DE ABAS (TABELA vs DASHBOARD)
-        // ==========================================
+        // ------------------------------------------------------------------
+        // 6. ALTERNÂNCIA DE ABAS
+        // ------------------------------------------------------------------
         function alternarAba(aba) {
             if(aba === 'tabela') {
                 document.getElementById('conteudo-tabela').style.display = 'block';
@@ -451,12 +523,14 @@
             }
         }
 
-        // ==========================================
-        // LÓGICA DE FILTROS E CÁLCULO DO DASHBOARD
-        // ==========================================
+        // ------------------------------------------------------------------
+        // 7. LÓGICA ATUALIZADA DOS 5 FILTROS E DASHBOARD
+        // ------------------------------------------------------------------
         const filtroData = document.getElementById('filtroData');
         const filtroTurno = document.getElementById('filtroTurno');
         const filtroMaquina = document.getElementById('filtroMaquina');
+        const filtroTipoMassa = document.getElementById('filtroTipoMassa');
+        const filtroTipo = document.getElementById('filtroTipo');
 
         filtroData.valueAsDate = new Date();
 
@@ -464,49 +538,44 @@
             const dataFiltroRaw = filtroData.value;
             const turnoSelecionado = filtroTurno.value;
             const maquinaSelecionada = filtroMaquina.value;
+            const massaSelecionada = filtroTipoMassa.value;
+            const tipoSelecionado = filtroTipo.value;
             
             let dataFormatadaFiltro = "";
-            if (dataFiltroRaw) {
-                dataFormatadaFiltro = dataFiltroRaw.split('-').reverse().join('/');
-            }
+            if (dataFiltroRaw) dataFormatadaFiltro = dataFiltroRaw.split('-').reverse().join('/');
 
             const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
             
-            // Variáveis para somar os dados do Dashboard
             let somaBruto = 0;
             let somaLiquido = 0;
             let totalLancamentos = 0;
 
             linhas.forEach(linha => {
                 const celulas = linha.querySelectorAll('td');
-                
                 if (celulas.length > 0) {
                     const dataTabela = celulas[0].textContent;
                     const turnoTabela = celulas[1].textContent;
                     const maquinaTabela = celulas[2].textContent;
+                    const massaTabela = celulas[3].textContent;
+                    const tipoTabela = celulas[4].textContent;
 
                     const bateData = (dataFormatadaFiltro === "" || dataTabela === dataFormatadaFiltro);
                     const bateTurno = (turnoSelecionado === "" || turnoTabela === turnoSelecionado);
                     const bateMaquina = (maquinaSelecionada === "" || maquinaTabela === maquinaSelecionada);
+                    const bateMassa = (massaSelecionada === "" || massaTabela === massaSelecionada);
+                    const bateTipo = (tipoSelecionado === "" || tipoTabela === tipoSelecionado);
 
-                    if (bateData && bateTurno && bateMaquina) {
+                    if (bateData && bateTurno && bateMaquina && bateMassa && bateTipo) {
                         linha.style.display = '';
-                        
-                        // Extrai os valores numéricos das colunas de peso e soma
-                        const valBruto = parseFloat(celulas[6].textContent) || 0;
-                        const valLiquido = parseFloat(celulas[7].textContent) || 0;
-                        
-                        somaBruto += valBruto;
-                        somaLiquido += valLiquido;
+                        somaBruto += parseFloat(celulas[6].textContent) || 0;
+                        somaLiquido += parseFloat(celulas[7].textContent) || 0;
                         totalLancamentos++;
-
                     } else {
                         linha.style.display = 'none';
                     }
                 }
             });
 
-            // Atualiza os cartões do Dashboard com os valores somados
             document.getElementById('dash-qtd').textContent = totalLancamentos;
             document.getElementById('dash-bruto').innerHTML = `${somaBruto.toFixed(2)} <span style="font-size: 0.5em; color: #94a3b8;">KG</span>`;
             document.getElementById('dash-liquido').innerHTML = `${somaLiquido.toFixed(2)} <span style="font-size: 0.5em; color: #94a3b8;">KG</span>`;
@@ -516,15 +585,16 @@
             filtroData.value = "";
             filtroTurno.value = "";
             filtroMaquina.value = "";
+            filtroTipoMassa.value = "";
+            filtroTipo.value = "";
             aplicarFiltros();
         }
 
         filtroData.addEventListener('change', aplicarFiltros);
         filtroTurno.addEventListener('change', aplicarFiltros);
         filtroMaquina.addEventListener('change', aplicarFiltros);
-
-        // Dispara ao iniciar a página
-        aplicarFiltros();
+        filtroTipoMassa.addEventListener('change', aplicarFiltros);
+        filtroTipo.addEventListener('change', aplicarFiltros);
     </script>
 </body>
 </html>
