@@ -59,14 +59,18 @@
     <header><h1>Acompanhamento de Produção</h1></header>
 
     <div class="container">
-        <div class="nav">
-    <a href="#" id="linkLanc" class="active" onclick="mostrarPagina('lancamento')">Lançamento</a>
-    <a href="#" id="linkOper" onclick="mostrarPagina('operadores')">Operadores</a>
-    <a href="#" id="linkHist" onclick="mostrarPagina('historico')">Histórico</a>
-    <a href="#" id="linkDash" onclick="mostrarPagina('dashboard')">Dashboard</a>
-    <a href="Massa.html">Fábrica de Massa</a>
-    <a href="Retorno.html" style="background-color: #28a745;">Controle de Retorno</a>
-</div>
+        <div class="nav" style="margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
+            <a href="index.html" style="font-weight: 700; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">Início</a>
+            <a href="Massa.html">Fábrica de Massa</a>
+            <a href="Retorno.html">Controle de Retorno</a>
+        </div>
+
+        <div class="nav" style="gap: 0.2rem; transform: scale(0.9);">
+            <a href="#" id="linkLanc" class="active" onclick="mostrarPagina('lancamento')">Lançamento</a>
+            <a href="#" id="linkOper" onclick="mostrarPagina('operadores')">Operadores</a>
+            <a href="#" id="linkHist" onclick="mostrarPagina('historico')">Histórico</a>
+            <a href="#" id="linkDash" onclick="mostrarPagina('dashboard')">Dashboard</a>
+        </div>
 
         <section id="lancamento">
             <h2>Lançamento de Produção</h2>
