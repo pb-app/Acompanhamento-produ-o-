@@ -77,6 +77,16 @@
         }
         .btn-adicionar:hover { background: var(--primary-dark); }
 
+        /* Botão de Excluir do Histórico */
+        .btn-excluir-registro {
+            background: #ef4444; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-excluir-registro:hover {
+            background: #b91c1c;
+        }
+
         .abas-sistema {
             display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;
         }
@@ -106,7 +116,6 @@
             font-size: 2rem; font-weight: 700; color: var(--primary-dark);
         }
         
-        /* Loading Overlay durante salvamento */
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.8); display: flex; flex-direction: column;
@@ -229,7 +238,7 @@
             </div>
 
             <div id="conteudo-tabela">
-                <table id="tabelaRetorno">
+                <table id="tabelaRetorno" style="width: 100%;">
                     <thead>
                         <tr>
                             <th>Data</th>
@@ -240,6 +249,7 @@
                             <th>Transporte</th>
                             <th>Bruto (KG)</th>
                             <th>Líquido (KG)</th>
+                            <th>Ação</th> 
                         </tr>
                     </thead>
                     <tbody>
@@ -290,15 +300,15 @@
 
     <script>
         // ------------------------------------------------------------------
-        // 1. INICIALIZAÇÃO DO FIREBASE (COLOQUE SUAS CHAVES DO FIREBASE AQUI)
+        // 1. INICIALIZAÇÃO DO FIREBASE (COLOQUE SUAS CHAVES AQUI)
         // ------------------------------------------------------------------
         const firebaseConfig = {
-            apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
-            authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
-            projectId: "acompanhamento-de-produc-b68b0",
-            storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
-            messagingSenderId: "891709449679",
-            appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
+                apiKey: "AIzaSyB2z4mFj5qVtb59uocKK8JXhMTfi8MGSTo",
+                authDomain: "acompanhamento-de-produc-b68b0.firebaseapp.com",
+                projectId: "acompanhamento-de-produc-b68b0",
+                storageBucket: "acompanhamento-de-produc-b68b0.firebasestorage.app",
+                messagingSenderId: "891709449679",
+                appId: "1:891709449679:web:43e83e076f5fb3201e1eba"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -428,7 +438,6 @@
         document.getElementById('formRetorno').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Exibe a tela de carregamento
             document.getElementById('loadingOverlay').style.display = 'flex';
             
             const dataRaw = document.getElementById('data').value;
@@ -438,7 +447,7 @@
             const tipoMassa = document.getElementById('tipoMassa').value;
             
             const linhasItens = document.querySelectorAll('.linha-dinamica');
-            const batch = db.batch(); // Inicia um lote de gravação do Firebase
+            const batch = db.batch();
             
             linhasItens.forEach(linha => {
                 const tipo = linha.querySelector('.campo-tipo').value;
@@ -446,12 +455,11 @@
                 const pesoBruto = parseFloat(linha.querySelector('.campo-bruto').value);
                 const pesoLiquido = parseFloat(linha.querySelector('.campo-liquido').value);
                 
-                // Cria uma nova referência de documento com ID automático
                 const docRef = db.collection('retornos').doc();
                 
                 batch.set(docRef, {
                     data: dataFormatada,
-                    data_iso: dataRaw, // Guarda o YYYY-MM-DD para facilitar filtros no banco depois
+                    data_iso: dataRaw,
                     turno: turno,
                     maquina: maquina,
                     tipoMassa: tipoMassa,
@@ -463,12 +471,10 @@
                 });
             });
             
-            // Dispara o lote todo de uma vez para o banco
             batch.commit().then(() => {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('container-linhas').innerHTML = '';
                 criarNovaLinha();
-                // O onSnapshot logo abaixo se encarregará de atualizar a tabela.
             }).catch((error) => {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 console.error("Erro ao salvar no Firebase: ", error);
@@ -481,10 +487,11 @@
         // ------------------------------------------------------------------
         db.collection('retornos').orderBy('timestamp', 'desc').onSnapshot((querySnapshot) => {
             const tbody = document.querySelector('#tabelaRetorno tbody');
-            tbody.innerHTML = ''; // Limpa a tabela atual
+            tbody.innerHTML = ''; 
             
             querySnapshot.forEach((doc) => {
                 const registro = doc.data();
+                const docId = doc.id; // Pegando o ID único gerado pelo Firebase
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -496,15 +503,33 @@
                     <td>${registro.transporte || ''}</td>
                     <td><strong>${Number(registro.pesoBruto).toFixed(2)}</strong></td>
                     <td style="color: green; font-weight: bold;">${Number(registro.pesoLiquido).toFixed(2)}</td>
+                    
+                    <td>
+                        <button class="btn-excluir-registro" onclick="excluirRegistro('${docId}')" title="Excluir lançamento">Excluir</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
             
-            // Como a tabela foi recriada, aplicamos os filtros nela
             aplicarFiltros();
         }, (error) => {
             console.error("Erro ao ler os dados do Firebase: ", error);
         });
+
+        // ------------------------------------------------------------------
+        // 5.1 FUNÇÃO PARA EXCLUIR REGISTRO DO FIREBASE
+        // ------------------------------------------------------------------
+        function excluirRegistro(id) {
+            // Pede confirmação antes de apagar
+            if(confirm("Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.")) {
+                db.collection('retornos').doc(id).delete().then(() => {
+                    // O item apagado sumirá da tabela graças ao onSnapshot, e o Dashboard será recalculado!
+                }).catch((error) => {
+                    console.error("Erro ao excluir documento: ", error);
+                    alert("Erro ao tentar excluir. Verifique sua conexão.");
+                });
+            }
+        }
 
         // ------------------------------------------------------------------
         // 6. ALTERNÂNCIA DE ABAS
