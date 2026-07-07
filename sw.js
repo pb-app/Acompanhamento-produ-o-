@@ -1,5 +1,5 @@
 // MUDANÇA 1: Alteramos para v2 para forçar atualização
-const CACHE_NAME = 'producao-app-v12.3';
+const CACHE_NAME = 'producao-app-v12.6';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -15,6 +15,8 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './icons/icon-180x180.png' 
 ];
+
+
 
 // Instalação
 self.addEventListener('install', (event) => {
