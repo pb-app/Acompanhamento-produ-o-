@@ -7,6 +7,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Controle de Retorno - Produção</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <meta name="theme-color" content="#0077cc">
     <link rel="stylesheet" href="css/global.css">
@@ -231,8 +233,9 @@
                         <option value="Mesa">Mesa</option>
                     </select>
                 </div>
-                <div>
-                    <button type="button" class="secondary" onclick="limparFiltros()" style="margin: 0; padding: 8px 15px;">Limpar Filtros</button>
+                <div style="display: flex; gap: 10px;">
+        <button type="button" class="secondary" onclick="limparFiltros()" style="margin: 0; padding: 8px 15px;">Limpar Filtros</button>
+        <button type="button" onclick="exportarExcelRetorno()" style="margin: 0; padding: 8px 15px; background-color: #10b981; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">📥 Exportar Excel</button>
                 </div>
             </div>
 
@@ -633,6 +636,64 @@
         filtroMaquina.addEventListener('change', aplicarFiltros);
         filtroTipoMassa.addEventListener('change', aplicarFiltros);
         filtroTipo.addEventListener('change', aplicarFiltros);
+
+        // ------------------------------------------------------------------
+        // 8. EXPORTAÇÃO PARA EXCEL (RESPEITANDO FILTROS)
+        // ------------------------------------------------------------------
+        function exportarExcelRetorno() {
+            // Seleciona todas as linhas da tabela
+            const linhas = document.querySelectorAll('#tabelaRetorno tbody tr');
+            const dadosExportacao = [];
+
+            linhas.forEach(linha => {
+                // A mágica acontece aqui: só pega a linha se ela estiver visível (filtro aplicado)
+                if (linha.style.display !== 'none') {
+                    const celulas = linha.querySelectorAll('td');
+                    if (celulas.length > 0) {
+                        
+                        // Tratamento para o Excel reconhecer como Data real e não texto
+                        const dataTabela = celulas[0].textContent; 
+                        const partesData = dataTabela.split('/');
+                        let dataFormatada = dataTabela;
+                        if(partesData.length === 3) {
+                            // Coloca meio-dia para evitar bugs de fuso horário
+                            dataFormatada = new Date(partesData[2], partesData[1] - 1, partesData[0], 12, 0, 0);
+                        }
+
+                        dadosExportacao.push({
+                            "Data": dataFormatada,
+                            "Turno": celulas[1].textContent,
+                            "Máquina": celulas[2].textContent,
+                            "Massa": celulas[3].textContent,
+                            "Tipo": celulas[4].textContent,
+                            "Transporte": celulas[5].textContent,
+                            "Bruto (KG)": parseFloat(celulas[6].textContent) || 0,
+                            "Líquido (KG)": parseFloat(celulas[7].textContent) || 0
+                        });
+                    }
+                }
+            });
+
+            // Se não tiver nada na tela, avisa e cancela
+            if (dadosExportacao.length === 0) {
+                alert("Nenhum dado visível para exportar.");
+                return;
+            }
+
+            // Monta o arquivo e faz o download
+            const ws = XLSX.utils.json_to_sheet(dadosExportacao);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Retornos");
+            
+            // Pega a data de hoje para colocar no nome do arquivo
+            const hoje = new Date();
+            const dataHojeStr = `${hoje.getDate().toString().padStart(2, '0')}-${(hoje.getMonth() + 1).toString().padStart(2, '0')}-${hoje.getFullYear()}`;
+            
+            XLSX.writeFile(wb, `Controle_Retorno_${dataHojeStr}.xlsx`);
+        }
+
+        
     </script>
+
 </body>
 </html>
