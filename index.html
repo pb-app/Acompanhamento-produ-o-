@@ -260,13 +260,55 @@
     <script type="module" src="js/index.js"></script>
 
     <script>
+      // 1. Registra o Service Worker imediatamente
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registrado', reg.scope))
           .catch(err => console.log('SW falhou', err));
         });
       }
-        
+
+      // 2. Lógica Imediata de Instalação (Fora do Module)
+      let deferredPrompt;
+      const installModal = document.getElementById('installModal');
+      const btnInstalar = document.getElementById('btnInstalarApp');
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+          // Impede o aviso padrão
+          e.preventDefault();
+          deferredPrompt = e;
+          
+          // Checa o localStorage
+          const jaViu = localStorage.getItem('dispensouInstalacao');
+          if (!jaViu && installModal) {
+              installModal.style.display = 'flex';
+          }
+      });
+
+      // 3. Ação de clique do botão Instalar
+      if(btnInstalar) {
+          btnInstalar.addEventListener('click', async () => {
+              if (deferredPrompt) {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  console.log(`Instalação: ${outcome}`);
+                  deferredPrompt = null;
+                  fecharModalInstalacao();
+              }
+          });
+      }
+
+      // 4. Função global para o botão "Agora não" funcionar no HTML
+      window.fecharModalInstalacao = function() {
+          if(installModal) installModal.style.display = 'none';
+          localStorage.setItem('dispensouInstalacao', 'sim');
+      }
+
+      // 5. Esconde de vez se o usuário instalar com sucesso
+      window.addEventListener('appinstalled', () => {
+          if(installModal) installModal.style.display = 'none';
+          localStorage.setItem('dispensouInstalacao', 'instalado');
+      });
     </script>
 </body>
 </html>
